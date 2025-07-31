@@ -43,8 +43,8 @@ rule snippy_core:  # MAl for snippy
         expand(ISOLATE_FP / "snippy" / "{sample}" / "snps.vcf", sample=Samples),
     output:
         ISOLATE_FP / "snippy_core" / "core.full.aln",
-    # params:
-    #     ref=Cfg["sbx_sga"]["snippy_ref"],
+    params:
+        ref=Cfg["sbx_sga"]["snippy_ref"],
     log:
         LOG_FP / "sga_snippy_core.log",
     benchmark:
