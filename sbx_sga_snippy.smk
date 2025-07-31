@@ -11,9 +11,8 @@ localrules:
 
 rule all_sga_snippy:
     input:
-        ISOLATE_FP / "reports" / "snippy.report", 
+        ISOLATE_FP / "reports" / "snippy.report",
         ISOLATE_FP / "iqtree" / "core.full.aln.treefile",
-
 
 
 rule sga_snippy:
