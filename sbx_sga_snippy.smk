@@ -54,7 +54,7 @@ rule snippy_core:  # MAl for snippy
         "envs/snippy.yml"
     shell:
         """
-        cd $(dirname {output}) && snippy-core --prefix core {input}
+        cd $(dirname {output}) && snippy-core --prefix core {input} --ref {params.ref} > {log} 2>&1
         
         """
 
