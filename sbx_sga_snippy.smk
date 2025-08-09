@@ -54,19 +54,25 @@ rule snippy_core:  # MAl for snippy
         "envs/snippy.yml"
     shell:
         """
-        cd $(dirname {output}) && snippy-core --prefix core {input} --ref {params.ref} > {log} 2>&1
+        cd $(dirname {output}) && snippy-core --prefix core $(dirname {input}) --ref {params.ref} > {log} 2>&1
         
         """
 
 
-rule iqtree:  # phylogeny tree for snippy MAl
+rule sga_iqtree:  # phylogeny tree
     input:
         ISOLATE_FP / "snippy_core" / "core.full.aln",
     output:
         ISOLATE_FP / "iqtree" / "core.full.aln.treefile",
+    log: 
+        LOG_FP / "sga_iqtree.log",
+    benchmark: 
+        BENCHMARK_FP / "sga_iqtree.tsv"
+    conda:
+        "envs/iqtree.yml"
     shell:
         """
-        iqtree -s core.full.aln -m MFP -B 1000 -T AUTO -pre $(dirname {input})
+        iqtree -s {input} -m MFP -B 1000 -T AUTO -pre $(dirname {input}) > {log} 2>&1
 
         """
 
