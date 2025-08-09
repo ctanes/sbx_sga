@@ -64,9 +64,9 @@ rule sga_iqtree:  # phylogeny tree
         ISOLATE_FP / "snippy_core" / "core.full.aln",
     output:
         ISOLATE_FP / "iqtree" / "core.full.aln.treefile",
-    log: 
+    log:
         LOG_FP / "sga_iqtree.log",
-    benchmark: 
+    benchmark:
         BENCHMARK_FP / "sga_iqtree.tsv"
     conda:
         "envs/iqtree.yml"
