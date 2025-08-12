@@ -2,26 +2,18 @@ import sys
 import os
 from pathlib import Path
 
-
-# # Find sylph output .tsv file
-# def find_file(filename, search_path="."):
-#     for root, dirs, files in os.walk(search_path):
-#         if filename in files:
-#             return os.path.join(root, filename)
-
-
 # Parsing the tsv file
 def parse_file(filepath):
     with open(filepath, "r") as file_obj:
         filelines = file_obj.readlines()
-        if len(filelines) > 1:
+        if len(filelines) > 2:
             keys = filelines[0].strip().split("\t")
             values = filelines[1].strip().split("\t")
             data_dict = dict(zip(keys, values))
             return data_dict
         else:
             return {
-                "Sample_file": "NA",
+                "Sample_file": filepath.split(".tsv")[0],
                 "Taxonomic_abundance": "NA",
                 "Contig_name": "NA",
             }
