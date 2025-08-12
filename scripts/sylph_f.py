@@ -2,6 +2,7 @@ import sys
 import os
 from pathlib import Path
 
+
 # Parsing the tsv file
 def parse_file(filepath):
     with open(filepath, "r") as file_obj:
@@ -15,10 +16,12 @@ def parse_file(filepath):
                 hits.append(hit_dict)
             return hits
         else:
-            return [{
-                "Taxonomic_abundance": "NA",
-                "Contig_name": "NA",
-            }]
+            return [
+                {
+                    "Taxonomic_abundance": "NA",
+                    "Contig_name": "NA",
+                }
+            ]
 
 
 # Fetching Sample name, taxonomic abundance, and contig name from parsed data
