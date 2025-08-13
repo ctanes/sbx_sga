@@ -35,8 +35,12 @@ rule sga_sylph:
         "envs/sylph.yml"
     shell:
         """
-        sylph sketch -1 {input.rp1} -2 {input.rp2} -t 1 -d $(dirname {output.report})
-        sylph profile {params.ref} $(dirname {output.report})/*.sylsp -t {threads} -o {output.report} 2> {log}
+    if [ $(zcat {input.rp1} | wc -l) -ge 4 ] && [ $(zcat {input.rp2} | wc -l) -ge 4 ]; then
+        sylph sketch -1 "{input.rp1}" -2 "{input.rp2}" -t 1 -d "$(dirname "{output.report}")"
+        sylph profile "{params.ref}" "$(dirname "{output.report}")"/*.sylsp -t {threads} -o "{output.report}" 2> "{log}"
+    else
+        touch {output.report}
+    fi
         """
 
 
