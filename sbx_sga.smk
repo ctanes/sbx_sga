@@ -10,20 +10,28 @@ except NameError:
 localrules:
     all_sga,
 
-
-rule sylph_temp:
+rule all_temp:
     input:
-        ISOLATE_FP / "reports" / "sylph.report",
+        f"{ISOLATE_FP}/reports/sylph.report"
 
+rule all_sga:
+    input:
+        expand(ISOLATE_FP / "quast" / "{sample}" / "report.tsv", sample=Samples),
+        f"{ISOLATE_FP}/reports/sylph.report",
+        f"{ISOLATE_FP}/reports/shovill.report",
+        f"{ISOLATE_FP}/reports/mlst.report",
+        f"{ISOLATE_FP}/reports/checkm.report",
+        f"{ISOLATE_FP}/reports/amr.report",
+        f"{ISOLATE_FP}/reports/bakta.report",
+        f"{ISOLATE_FP}/reports/mash.report",
+        f"{ISOLATE_FP}/final_summary.tsv",
 
 rule sga_sylph:
     input:
         rp1=QC_FP / "decontam" / "{sample}_1.fastq.gz",
         rp2=QC_FP / "decontam" / "{sample}_2.fastq.gz",
-    # pretend database exists
     output:
         report=ISOLATE_FP / "sylph" / "{sample}" / "{sample}.tsv",
-    # ignore params, log, benchmark, conda env for now
     threads: 8
     params:
         ref=Cfg["sbx_sga"]["sylph_ref"],
@@ -42,7 +50,6 @@ rule sga_sylph:
         touch {output.report}
     fi
         """
-
 
 rule sylph_report:
     input:
@@ -65,34 +72,6 @@ rule combine_sylph_summary:
         echo -e "Sample\\tTaxonomic_Abundance\\tContig_Name" > {output.all_summary}
         cat {input.summaries} >> {output.all_summary}
         """
-
-
-rule all_sga:
-    input:
-        # QC
-        expand(ISOLATE_FP / "mash" / "{sample}_sorted_winning.tab", sample=Samples),
-        # Assembly QC
-        expand(
-            ISOLATE_FP / "checkm" / "{sample}" / "quality_report.tsv", sample=Samples
-        ),
-        expand(ISOLATE_FP / "quast" / "{sample}" / "report.tsv", sample=Samples),
-        # Typing
-        expand(ISOLATE_FP / "mlst" / "{sample}.mlst", sample=Samples),
-        # Annotation
-        expand(ISOLATE_FP / "bakta" / "{sample}" / "{sample}.txt", sample=Samples),
-        # AMR Profiling
-        expand(ISOLATE_FP / "abritamr" / "{sample}" / "amrfinder.out", sample=Samples),
-        # Sylph
-        #expand(ISOLATE_FP / "sylph" / "{sample}" / "{sample}.tsv", sample=Samples),
-        f"{ISOLATE_FP}/reports/sylph.report",
-        f"{ISOLATE_FP}/reports/shovill.report",
-        f"{ISOLATE_FP}/reports/mlst.report",
-        f"{ISOLATE_FP}/reports/checkm.report",
-        f"{ISOLATE_FP}/reports/amr.report",
-        f"{ISOLATE_FP}/reports/bakta.report",
-        f"{ISOLATE_FP}/reports/mash.report",
-        f"{ISOLATE_FP}/final_summary.tsv",
-
 
 rule sga_mash:
     input:
