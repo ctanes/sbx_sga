@@ -81,8 +81,11 @@ rule sga_genomad_end_to_end:
         DB_DIR=$(dirname {input.db_version})
         
         if [ ! -s {input.contigs} ]; then
+            mkdir -p $(dirname {output.plasmid_summary})
             touch {output.plasmid_summary}
             touch {output.virus_summary}
+            touch {output.plasmid_gene_summary}
+            touch {output.virus_gene_summary}
         else
             genomad end-to-end --cleanup --splits 8 {input.contigs} $(dirname "$ASSEMBLY_SUMMARY_DIR") $DB_DIR > {log} 2>&1
         fi
