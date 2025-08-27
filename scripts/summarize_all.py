@@ -23,7 +23,7 @@ def process_filelines(fp, tool, master_list):
             mlst_list.append(final_line)
         df = pd.DataFrame(mlst_list)
         df.columns = ["Sample", "Schema", "ST", "Alleles"]
-        df["Sample"] = df["Sample"].apply(lambda x: x.rstrip(".fa"))
+        df["Sample"] = df["Sample"].str.removesuffix(".fa")
         master_list.append(df)
 
     else:
