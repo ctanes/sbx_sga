@@ -29,15 +29,19 @@ def get_stats(data_dict, report):
     sample_name = os.path.basename(report).split(".tsv")[0]
     taxo_abundance = data_dict.get("Taxonomic_abundance", "NA")
     contig = data_dict.get("Contig_name", "NA")
-    return sample_name, taxo_abundance, contig
+    if (contig != "NA"):
+        contig = contig.split(" ", 1)
+    else:
+        contig = ["NA", "NA"]
+    return sample_name, taxo_abundance, contig[0], contig[1]
 
 
 # Writing it to the snakemake output
 def write_report(output, hits, report):
     with open(output, "w") as op:
         for hit in hits:
-            sample_name, taxo_abundance, contig = get_stats(hit, report)
-            op.write(f"{sample_name}\t{taxo_abundance}\t{contig}\n")
+            sample_name, taxo_abundance, id, taxon = get_stats(hit, report)
+            op.write(f"{sample_name}\t{taxo_abundance}\t{id}\t{taxon}\n")
     return output
 
 
