@@ -1,5 +1,9 @@
 ISOLATE_FP = Cfg["all"]["output_fp"] / "isolate"
-TOOLS = ["shovill", "mlst", "checkm", "amr", "bakta", "mash"]
+#TOOLS = ["mlst", "bakta", "mash"]
+TOOLS = {"shovill":["Coverage", "Number of Contigs"], 
+"checkm":["Completeness", "Contamination"], 
+"sylph":["Taxonomic_abundance", "Contig_name"]}
+
 try:
     SBX_SGA_VERSION = get_ext_version("sbx_sga")
 except NameError:
@@ -12,7 +16,7 @@ localrules:
 
 rule all_temp:
     input:
-        f"{ISOLATE_FP}/reports/sylph.report"
+        f"{ISOLATE_FP}/final_summary.tsv"
 
 rule all_sga:
     input:
@@ -51,27 +55,18 @@ rule sga_sylph:
     fi
         """
 
-rule sylph_report:
-    input:
-        report=ISOLATE_FP / "sylph" / "{sample}" / "{sample}.tsv",
-    output:
-        parsed_report=ISOLATE_FP / "sylph" / "{sample}" / "{sample}.sylph",
-    script:
-        "scripts/sylph.py"
-
-
 rule combine_sylph_summary:
     input:
         summaries=expand(
-            ISOLATE_FP / "sylph" / "{sample}" / "{sample}.sylph", sample=Samples
+            ISOLATE_FP / "sylph" / "{sample}" / "{sample}.tsv", sample=Samples
         ),
     output:
         all_summary=ISOLATE_FP / "reports" / "sylph.report",
-    shell:
-        """
-        echo -e "Sample\\tTaxonomic_Abundance\\tContig_Name" > {output.all_summary}
-        cat {input.summaries} >> {output.all_summary}
-        """
+    params:
+        suffix="",
+        header=True
+    script:
+        "scripts/concat_files.py"
 
 rule sga_mash:
     input:
@@ -271,29 +266,19 @@ rule mlst_summary:
         """
 
 
-### Parse checkm outputs
-rule parse_checkm_report:
-    input:
-        report=ISOLATE_FP / "checkm" / "{sample}" / "quality_report.tsv",
-    output:
-        parsed_report=ISOLATE_FP / "checkm" / "{sample}" / "parsed_summary.tsv",
-    script:
-        "scripts/checkm.py"
-
-
-### Combine parsed checkm output reports
+### Combine checkm output reports
 rule combine_checkm_summary:
     input:
         summaries=expand(
-            ISOLATE_FP / "checkm" / "{sample}" / "parsed_summary.tsv", sample=Samples
+            ISOLATE_FP / "checkm" / "{sample}" / "quality_report.tsv", sample=Samples
         ),
     output:
         all_summary=ISOLATE_FP / "reports" / "checkm.report",
-    shell:
-        """
-        echo -e "Sample\\tCheckM_Completeness\\tCheckM_Contamination" > {output.all_summary}
-        cat {input.summaries} >> {output.all_summary}
-        """
+    params:
+        suffix="",
+        header=True 
+    script:
+        "scripts/concat_files.py"
 
 
 ### AbritAMR Report:
@@ -304,8 +289,11 @@ rule abritamr_summary:
         ),
     output:
         amr_report=ISOLATE_FP / "reports" / "amr.report",
+    params:
+        suffix="",
+        header=True 
     script:
-        "scripts/amr.py"
+        "scripts/concat_files.py"
 
 
 ### Parse bakta output
@@ -386,9 +374,11 @@ rule combine_mash_summary:
 ## Summary Report
 rule all_summary:
     input:
-        reports=expand(ISOLATE_FP / "reports" / "{tool}.report", tool=TOOLS),
+        reports=expand(ISOLATE_FP / "reports" / "{tool}.report", tool=TOOLS.keys()),
     output:
         final_report=ISOLATE_FP / "final_summary.tsv",
+    params:
+        tools=TOOLS
     script:
         "scripts/summarize_all.py"
 

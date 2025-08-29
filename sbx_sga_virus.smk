@@ -81,29 +81,42 @@ rule sga_genomad_end_to_end:
         DB_DIR=$(dirname {input.db_version})
         
         if [ ! -s {input.contigs} ]; then
-            mkdir -p $(dirname {output.plasmid_summary})
+            mkdir -p ${{ASSEMBLY_SUMMARY_DIR}}
             touch {output.plasmid_summary}
             touch {output.virus_summary}
             touch {output.plasmid_gene_summary}
             touch {output.virus_gene_summary}
         else
-            genomad end-to-end --cleanup --splits 8 {input.contigs} $(dirname "$ASSEMBLY_SUMMARY_DIR") $DB_DIR > {log} 2>&1
+            genomad end-to-end --cleanup --splits 8 {input.contigs} $(dirname "${{ASSEMBLY_SUMMARY_DIR}}") $DB_DIR > {log} 2>&1
         fi
         """
 
 
-rule sga_classification_summary:
-    """Summarizes the plasmid and phage classifications per sample"""
+rule sga_plasmid_classification_summary:
+    """Summarizes the plasmid classifications per sample"""
     input:
-        plasmid_summary=expand(
+        reports=expand(
             ISOLATE_FP
             / "genomad"
             / "{sample}"
             / "{sample}_summary"
             / "{sample}_plasmid_summary.tsv",
             sample=Samples,
-        ),
-        virus_summary=expand(
+        )
+    output:
+        plasmid_summary_report=ISOLATE_FP
+        / "reports"
+        / "genomad_plasmid_classification.report",
+    params:
+        suffix="_summary",
+        header=True
+    script:
+        "scripts/concat_files.py"
+
+rule sga_phage_classification_summary:
+    """Summarizes the phage classifications per sample"""
+    input:
+        reports=expand(
             ISOLATE_FP
             / "genomad"
             / "{sample}"
@@ -112,20 +125,20 @@ rule sga_classification_summary:
             sample=Samples,
         ),
     output:
-        plasmid_summary_report=ISOLATE_FP
-        / "reports"
-        / "genomad_plasmid_classification.report",
         virus_summary_report=ISOLATE_FP
         / "reports"
         / "genomad_virus_classification.report",
+    params:
+        suffix="_summary",
+        header=True
     script:
-        "scripts/genomad.py"
+        "scripts/concat_files.py"
 
 
-rule sga_gene_summary:
-    """Summarizes the genes associated with each of the plasmid and phage classifications per sample"""
+rule sga_plasmid_gene_summary:
+    """Summarizes the genes associated with each of the plasmid classifications per sample"""
     input:
-        virus_gene_summary=expand(
+        reports=expand(
             ISOLATE_FP
             / "genomad"
             / "{sample}"
@@ -133,7 +146,18 @@ rule sga_gene_summary:
             / "{sample}_virus_genes.tsv",
             sample=Samples,
         ),
-        plasmid_gene_summary=expand(
+    output:
+        plasmid_gene_report=ISOLATE_FP / "reports" / "genomad_plasmid_genes.report",
+    params:
+        suffix="_summary",
+        header=True
+    script:
+        "scripts/concat_files.py"
+
+rule sga_virus_gene_summary:
+    """Summarizes the genes associated with each of the phage classifications per sample"""
+    input:
+        reports=expand(
             ISOLATE_FP
             / "genomad"
             / "{sample}"
@@ -142,7 +166,9 @@ rule sga_gene_summary:
             sample=Samples,
         ),
     output:
-        plasmid_gene_report=ISOLATE_FP / "reports" / "genomad_plasmid_genes.report",
         virus_gene_report=ISOLATE_FP / "reports" / "genomad_virus_genes.report",
+    params:
+        suffix="_summary",
+        header=True
     script:
-        "scripts/genomad_gene.py"
+        "scripts/concat_files.py"
