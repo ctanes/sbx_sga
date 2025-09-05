@@ -65,3 +65,5 @@ def write_shovill_stats(fp_in, fp_out):
                 contig_stats.append(parse_header(header))
             final_stats = calc_cov_stats(contig_stats)
             writer.writerow(final_stats)
+        else:
+            writer.writerow([0,0,0,0])
