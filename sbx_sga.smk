@@ -1,8 +1,11 @@
 ISOLATE_FP = Cfg["all"]["output_fp"] / "isolate"
-#TOOLS = ["mlst", "bakta", "mash"]
-TOOLS = {"shovill":["number of contigs", "min coverage", "max coverage", "mean coverage"], 
+TOOLS = {
+#"shovill":["number of contigs", "min coverage", "max coverage", "mean coverage"], 
 "checkm":["Completeness", "Contamination"], 
-"sylph":["Taxonomic_abundance", "Contig_name"]}
+"sylph":["Taxonomic_abundance", "Contig_name"],
+"mlst":["Schema", "ST", "Alleles"],
+"bakta":["Length", "GC", "N50", "CDSs", "tRNAs", "tmRNAs", "rRNAs",  "hypotheticals", "CRISPR arrays"],
+"mash":["Mash_Contamination", "Contaminated_Spp"]}
 
 try:
     SBX_SGA_VERSION = get_ext_version("sbx_sga")
@@ -16,13 +19,13 @@ localrules:
 
 rule all_temp:
     input:
-        f"{ISOLATE_FP}/reports/shovill.report"
+        f"{ISOLATE_FP}/reports/mash.report"
 
 rule all_sga:
     input:
         expand(ISOLATE_FP / "quast" / "{sample}" / "report.tsv", sample=Samples),
         f"{ISOLATE_FP}/reports/sylph.report",
-        f"{ISOLATE_FP}/reports/shovill.report",
+        #f"{ISOLATE_FP}/reports/shovill.report",
         f"{ISOLATE_FP}/reports/mlst.report",
         f"{ISOLATE_FP}/reports/checkm.report",
         f"{ISOLATE_FP}/reports/amr.report",
@@ -192,9 +195,9 @@ rule sga_mash:
     input:
         reads=expand(QC_FP / "decontam" / "{{sample}}_{rp}.fastq.gz", rp=Pairs),
     output:
-        agg=temp(ISOLATE_FP / "mash" / "{sample}.fastq"),
-        win=temp(ISOLATE_FP / "mash" / "{sample}_winning.tab"),
-        sort=ISOLATE_FP / "mash" / "{sample}_sorted_winning.tab",
+        agg=temp(ISOLATE_FP / "mash" / "{sample}" / "{sample}.fastq"),
+        win=temp(ISOLATE_FP / "mash" / "{sample}" / "{sample}_winning.tab"),
+        sort=ISOLATE_FP / "mash" / "{sample}" / "{sample}_sorted_winning.tab",
     params:
         ref=Cfg["sbx_sga"]["mash_ref"],
     log:
@@ -217,9 +220,9 @@ rule sga_mash:
 
 rule mash_summary:
     input:
-        sorted_reports=ISOLATE_FP / "mash" / "{sample}_sorted_winning.tab",
+        sorted_reports=ISOLATE_FP / "mash" / "{sample}" / "{sample}_sorted_winning.tab",
     output:
-        summary=ISOLATE_FP / "mash" / "{sample}_summary.tsv",
+        summary=ISOLATE_FP / "mash" / "{sample}" / "{sample}_summary.tsv",
     script:
         "scripts/mash.py"
 
@@ -227,13 +230,13 @@ rule mash_summary:
 rule combine_mash_summary:
     input:
         summary_reports=expand(
-            ISOLATE_FP / "mash" / "{sample}_summary.tsv", sample=Samples
+            ISOLATE_FP / "mash" / "{sample}" / "{sample}_summary.tsv", sample=Samples
         ),
     output:
         mash_report=ISOLATE_FP / "reports" / "mash.report",
     shell:
         """
-        echo -e "Sample\\tMash_Contamination\\tContaminated_Spp" > {output.mash_report}
+        echo -e "SampleID\\tMash_Contamination\\tContaminated_Spp" > {output.mash_report}
         cat {input.summary_reports} >> {output.mash_report}
         """
 
@@ -243,7 +246,7 @@ rule sga_mlst:
     input:
         contigs=ISOLATE_FP / "shovill" / "{sample}" / "{sample}.fa",
     output:
-        mlst=ISOLATE_FP / "mlst" / "{sample}.mlst",
+        mlst=ISOLATE_FP / "mlst" / "{sample}" / "{sample}.mlst",
     log:
         LOG_FP / "sga_mlst_{sample}.log",
     benchmark:
@@ -255,26 +258,32 @@ rule sga_mlst:
         if [ -s {input.contigs} ]; then
             mlst --nopath {input.contigs} > {output.mlst} 2> {log}
         else
+            mkdir -p $(dirname {output.mlst})
             touch {output.mlst}
         fi
         """
 
+rule mlst_parse:
+    input:
+        reports=ISOLATE_FP / "mlst" / "{sample}" / "{sample}.mlst",
+    output:
+        mlst_report=ISOLATE_FP / "mlst" / "{sample}" / "parsed_mlst.txt",
+    script:
+        "scripts/mlst.py"
+
+
 rule mlst_summary:
     input:
-        reports=expand(ISOLATE_FP / "mlst" / "{sample}.mlst", sample=Samples),
+        reports=expand(
+            ISOLATE_FP / "mlst" / "{sample}" / "parsed_mlst.txt", sample=Samples
+        ),
     output:
-        mlst_report=ISOLATE_FP / "reports" / "mlst.report",
-    shell:
-        """
-        for f in {input.reports}; do
-            if [ -s "$f" ]; then
-                cat "$f"
-            else
-                sample=$(basename "$f" .mlst)
-                echo -e "$sample\t\t\t\t\t\t\t\t\t"
-            fi
-        done > {output.mlst_report}
-        """
+        amr_report=ISOLATE_FP / "reports" / "mlst.report",
+    params:
+        suffix="",
+        header=True 
+    script:
+        "scripts/concat_files.py"
 
 
 ### Annotation
@@ -321,12 +330,11 @@ rule combine_bakta_summary:
         ),
     output:
         bakta_report=ISOLATE_FP / "reports" / "bakta.report",
-    shell:
-        """
-        echo -e "Sample\\tGenome Size\\tCDS\\tN50\\trrna\\ttrna\\ttmrna\\tcrispr\\thypothetical\\tGC Content" > {output.bakta_report}
-        cat {input.reports} >> {output.bakta_report}
-        """
-
+    params:
+        suffix="",
+        header=True
+    script:
+        "scripts/concat_files.py"
 
 
 
