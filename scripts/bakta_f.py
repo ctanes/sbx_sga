@@ -1,9 +1,10 @@
+import sys
 import os
-
+import csv
 
 def parse_file(filelines):
+    parsed_dict = {}
     if len(filelines) != 0:
-        parsed_dict = {}
         for line in filelines:
             line = line.rstrip().split(":")
             try:
@@ -12,61 +13,31 @@ def parse_file(filelines):
             except:
                 continue
             parsed_dict[key] = value
-        return parsed_dict
-    else:
-        return {
-            "CRISPR arrays": "NA",
-            "hypotheticals": "NA",
-            "tRNAs": "NA",
-            "tmRNAs": "NA",
-            "rRNAs": "NA",
-            "CDSs": "NA",
-            "N50": "NA",
-            "Length": "NA",
-            "GC": "NA",
-        }
+    return parsed_dict
 
 
-def get_annotation_stats(parsed_dict):
-    crispr_count = parsed_dict["CRISPR arrays"]
-    hypothetical_count = parsed_dict["hypotheticals"]
-    trna_count = parsed_dict["tRNAs"]
-    tmrna_count = parsed_dict["tmRNAs"]
-    rrna_count = parsed_dict["rRNAs"]
-    cds_count = parsed_dict["CDSs"]
-    N50 = parsed_dict["N50"]
-    genome_size = parsed_dict["Length"]
-    gc = parsed_dict["GC"]
-    return (
-        crispr_count,
-        hypothetical_count,
-        trna_count,
-        tmrna_count,
-        rrna_count,
-        cds_count,
-        N50,
-        genome_size,
-        gc,
-    )
+def test_parse():
+    lines = ['Annotation:\n', 'test: 9\n', 'a: 10\n', '\n', 'd: 1343\n']
+    assert parse_file(lines) == {"Annotation":"", "test":"9", "a":"10", "d":"1343"}
+
+def filter_keys(parsed_dict):
+    return {key: value for key, value in parsed_dict.items() if value != ""}
+
+def test_filter():
+    test = {"Annotation":"", "test":"9", "a":"10", "d":"1343"}
+    assert filter_keys(test) == {"test":"9", "a":"10", "d":"1343"}
 
 
-def write_to_report(
-    output,
-    genome,
-    crispr_count,
-    hypothetical_count,
-    trna_count,
-    tmrna_count,
-    rrna_count,
-    cds_count,
-    N50,
-    genome_size,
-    gc,
-):
-    sample = os.path.splitext(os.path.basename(genome))[0]
-    with open(output, "w") as op:
-        op.write(
-            f"{sample}\t{genome_size}\t{cds_count}\t{N50}\t{rrna_count}\t{trna_count}\t{tmrna_count}\t{crispr_count}\t{hypothetical_count}\t{gc}\n"
-        )
-    # The file is closed after this function, and only the path is returned.
-    return output
+def write_to_report(report_fp, output_fp):
+    with open(report_fp, 'r') as f_in:
+        lines = f_in.readlines()
+
+    parsed_dict = parse_file(lines)
+    filtered = filter_keys(parsed_dict)
+
+    with open(output_fp, "w") as op:
+        writer = csv.writer(op, delimiter='\t')
+        writer.writerow(filtered.keys())
+        writer.writerow(filtered.values())
+
+

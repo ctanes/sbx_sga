@@ -42,5 +42,8 @@ rule snippy_summary:
         expand(ISOLATE_FP / "snippy" / "{sample}" / "snps.tab", sample=Samples),
     output:
         ISOLATE_FP / "reports" / "snippy.report",
+    params:
+        suffix="",
+        header=True
     script:
-        "scripts/snippy.py"
+        "scripts/concat_files.py"

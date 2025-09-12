@@ -1,7 +1,6 @@
 import sys
 from scripts.mash_f import open_report, parse_report, contamination_call, write_report
 
-
 sorted_report = snakemake.input[0]
 output = snakemake.output[0]
 

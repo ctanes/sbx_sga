@@ -1,17 +1,5 @@
-import sys
-from scripts.shovill_f import get_individual_cov, calc_cov_stats, write_to_report
+from shovill_f import write_shovill_stats
 
 genome = snakemake.input[0]
 output = snakemake.output[0]
-
-file_obj = open(genome, "r")
-filelines = file_obj.readlines()
-
-if len(filelines) == 0:
-    genome_cov = "NA"
-    num_ctgs = "NA"
-    write_to_report(output, genome, genome_cov, num_ctgs)
-else:
-    ctg_stats = get_individual_cov(filelines)
-    genome_cov, num_ctgs = calc_cov_stats(ctg_stats)
-    write_to_report(output, genome, genome_cov, num_ctgs)
+write_shovill_stats(genome, output)
