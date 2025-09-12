@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 @pytest.fixture
-def setup(tmp_path):
+def setup(tmp_path: Path):
     reads_fp = Path(".tests/data/reads/").resolve()
     snippy_fp = Path(".tests/data/Bfragilis.fasta").resolve()
     checkm_fp = Path(".tests/data/checkm_test.dmnd").resolve()
@@ -69,6 +69,18 @@ def setup(tmp_path):
     )
 
     config_str = f"sbx_sga: {{snippy_ref: '{snippy_fp}'}}"
+    sp.check_output(
+        [
+            "sunbeam",
+            "config",
+            "--modify",
+            f"{config_str}",
+            f"{config_fp}",
+        ]
+    )
+
+    config_str = f"sbx_sga: {{sylph_ref: '{tmp_path}/gtdb-r220-c200-dbv1.syldb'}}"
+    (tmp_path / "gtdb-r220-c200-dbv1.syldb").touch()
     sp.check_output(
         [
             "sunbeam",
