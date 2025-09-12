@@ -108,8 +108,6 @@ def run_sunbeam(setup):
             "--profile",
             project_dir,
             "test_sga",
-            "--skip",
-            "decontam",
             "--directory",
             tmp_path,
             "--include",
