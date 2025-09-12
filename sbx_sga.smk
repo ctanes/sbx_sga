@@ -1,11 +1,22 @@
 ISOLATE_FP = Cfg["all"]["output_fp"] / "isolate"
 TOOLS = {
-#"shovill":["number of contigs", "min coverage", "max coverage", "mean coverage"], 
-"checkm":["Completeness", "Contamination"], 
-"sylph":["Taxonomic_abundance", "Contig_name"],
-"mlst":["Schema", "ST", "Alleles"],
-"bakta":["Length", "GC", "N50", "CDSs", "tRNAs", "tmRNAs", "rRNAs",  "hypotheticals", "CRISPR arrays"],
-"mash":["Mash_Contamination", "Contaminated_Spp"]}
+    # "shovill":["number of contigs", "min coverage", "max coverage", "mean coverage"],
+    "checkm": ["Completeness", "Contamination"],
+    "sylph": ["Taxonomic_abundance", "Contig_name"],
+    "mlst": ["Schema", "ST", "Alleles"],
+    "bakta": [
+        "Length",
+        "GC",
+        "N50",
+        "CDSs",
+        "tRNAs",
+        "tmRNAs",
+        "rRNAs",
+        "hypotheticals",
+        "CRISPR arrays",
+    ],
+    "mash": ["Mash_Contamination", "Contaminated_Spp"],
+}
 
 try:
     SBX_SGA_VERSION = get_ext_version("sbx_sga")
@@ -17,9 +28,11 @@ except NameError:
 localrules:
     all_sga,
 
+
 rule all_temp:
     input:
-        f"{ISOLATE_FP}/reports/mash.report"
+        f"{ISOLATE_FP}/reports/mash.report",
+
 
 rule all_sga:
     input:
@@ -54,6 +67,7 @@ rule sga_shovill:
         touch {output.contigs}
         """
 
+
 ## Parse shovill output
 rule shovill_summary:
     input:
@@ -74,7 +88,7 @@ rule combine_shovill_summary:
         shovill_report=ISOLATE_FP / "reports" / "shovill.report",
     params:
         suffix="",
-        header=True
+        header=True,
     script:
         "scripts/concat_files.py"
 
@@ -105,6 +119,7 @@ rule sga_sylph:
     fi
         """
 
+
 rule combine_sylph_summary:
     input:
         summaries=expand(
@@ -114,11 +129,9 @@ rule combine_sylph_summary:
         all_summary=ISOLATE_FP / "reports" / "sylph.report",
     params:
         suffix="",
-        header=True
+        header=True,
     script:
         "scripts/concat_files.py"
-
-
 
 
 ### Assembly QC
@@ -160,7 +173,7 @@ rule combine_checkm_summary:
         all_summary=ISOLATE_FP / "reports" / "checkm.report",
     params:
         suffix="",
-        header=True 
+        header=True,
     script:
         "scripts/concat_files.py"
 
@@ -189,8 +202,6 @@ rule sga_quast:
         """
 
 
-
-
 rule sga_mash:
     input:
         reads=expand(QC_FP / "decontam" / "{{sample}}_{rp}.fastq.gz", rp=Pairs),
@@ -217,6 +228,7 @@ rule sga_mash:
             touch {output.win} {output.sort}
         fi
         """
+
 
 rule mash_summary:
     input:
@@ -263,6 +275,7 @@ rule sga_mlst:
         fi
         """
 
+
 rule mlst_parse:
     input:
         reports=ISOLATE_FP / "mlst" / "{sample}" / "{sample}.mlst",
@@ -281,7 +294,7 @@ rule mlst_summary:
         amr_report=ISOLATE_FP / "reports" / "mlst.report",
     params:
         suffix="",
-        header=True 
+        header=True,
     script:
         "scripts/concat_files.py"
 
@@ -332,10 +345,9 @@ rule combine_bakta_summary:
         bakta_report=ISOLATE_FP / "reports" / "bakta.report",
     params:
         suffix="",
-        header=True
+        header=True,
     script:
         "scripts/concat_files.py"
-
 
 
 ### AMR Profiling
@@ -364,6 +376,7 @@ rule sga_abritamr:
         fi     
     """
 
+
 rule abritamr_summary:
     input:
         reports=expand(
@@ -373,14 +386,9 @@ rule abritamr_summary:
         amr_report=ISOLATE_FP / "reports" / "amr.report",
     params:
         suffix="",
-        header=True 
+        header=True,
     script:
         "scripts/concat_files.py"
-
-
-
-
-
 
 
 # Final Summary Report
@@ -390,7 +398,7 @@ rule all_summary:
     output:
         final_report=ISOLATE_FP / "final_summary.tsv",
     params:
-        tools=TOOLS
+        tools=TOOLS,
     script:
         "scripts/summarize_all.py"
 

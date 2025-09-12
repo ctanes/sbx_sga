@@ -102,16 +102,17 @@ rule sga_plasmid_classification_summary:
             / "{sample}_summary"
             / "{sample}_plasmid_summary.tsv",
             sample=Samples,
-        )
+        ),
     output:
         plasmid_summary_report=ISOLATE_FP
         / "reports"
         / "genomad_plasmid_classification.report",
     params:
         suffix="_summary",
-        header=True
+        header=True,
     script:
         "scripts/concat_files.py"
+
 
 rule sga_phage_classification_summary:
     """Summarizes the phage classifications per sample"""
@@ -130,7 +131,7 @@ rule sga_phage_classification_summary:
         / "genomad_virus_classification.report",
     params:
         suffix="_summary",
-        header=True
+        header=True,
     script:
         "scripts/concat_files.py"
 
@@ -150,9 +151,10 @@ rule sga_plasmid_gene_summary:
         plasmid_gene_report=ISOLATE_FP / "reports" / "genomad_plasmid_genes.report",
     params:
         suffix="_summary",
-        header=True
+        header=True,
     script:
         "scripts/concat_files.py"
+
 
 rule sga_virus_gene_summary:
     """Summarizes the genes associated with each of the phage classifications per sample"""
@@ -169,6 +171,6 @@ rule sga_virus_gene_summary:
         virus_gene_report=ISOLATE_FP / "reports" / "genomad_virus_genes.report",
     params:
         suffix="_summary",
-        header=True
+        header=True,
     script:
         "scripts/concat_files.py"

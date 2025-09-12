@@ -2,6 +2,7 @@ import pandas as pd
 from functools import reduce
 import os
 
+
 def process_filelines(fp, columns):
     df = pd.read_csv(fp, sep="\t")
     columns.insert(0, "SampleID")
@@ -23,10 +24,10 @@ def summarize_all(input_files, output, tools):
         master_list.append(df)
 
     final_df = reduce(
-        lambda left, right: pd.merge(left, right, on="SampleID", how="outer"), master_list
+        lambda left, right: pd.merge(left, right, on="SampleID", how="outer"),
+        master_list,
     )
     final_df.to_csv(output, index=False, sep="\t")
-
 
 
 summarize_all(snakemake.input, snakemake.output[0], snakemake.params.tools)

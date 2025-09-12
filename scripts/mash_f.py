@@ -2,6 +2,7 @@ import re
 import os
 import sys
 
+
 def open_report(report):
     sample_name = os.path.basename(report.split("_sorted_winning.tab")[0])
     with open(report, "r") as report_obj:

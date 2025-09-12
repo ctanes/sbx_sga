@@ -44,6 +44,6 @@ rule snippy_summary:
         ISOLATE_FP / "reports" / "snippy.report",
     params:
         suffix="",
-        header=True
+        header=True,
     script:
         "scripts/concat_files.py"
