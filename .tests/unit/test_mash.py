@@ -8,6 +8,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from mash_f import (
     open_report,
     process_mash_line,
+    get_first_non_phage_hit,
     parse_report,
     contamination_call,
     write_report,
@@ -39,6 +40,18 @@ def test_parse_report():
     target_set = parse_report(top_lines)
     assert isinstance(target_set, set)
     assert len(target_set) > 0
+
+
+def test_get_first_non_phage_hit():
+    sample_report = os.path.join(test_data_dir, "sample_sorted_winning.tab")
+    with open(sample_report, "r") as f:
+        lines = f.readlines()[:3]
+    phage_line = lines[0].rstrip() + " phage\n"
+    test_lines = [phage_line] + lines[1:]
+    result, idx = get_first_non_phage_hit(test_lines)
+    expected = process_mash_line(lines[1])
+    assert result == expected
+    assert idx == 1
 
 
 def test_contamination_call():
