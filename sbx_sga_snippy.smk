@@ -73,7 +73,6 @@ rule sga_iqtree:  # phylogeny tree
     shell:
         """
         iqtree -s {input} -m MFP -B 1000 -T AUTO -pre $(dirname {input}) > {log} 2>&1
-
         """
 
 
