@@ -15,4 +15,3 @@ def test_write_to_report(tmp_path):
     lines = output.read_text().splitlines()
     assert lines[0] == "Schema\tST\tAlleles"
     assert lines[1] == "saureus\t30\tarcC(2) aroE(2)"
-

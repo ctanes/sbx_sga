@@ -28,4 +28,3 @@ def test_write_to_report(tmp_path):
     content = output_fp.read_text().splitlines()
     assert content[0] == "foo\tbar"
     assert content[1] == "2\t3"
-

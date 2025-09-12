@@ -37,4 +37,3 @@ def test_summarize_all(tmp_path):
     assert lines[0] == "SampleID\tcol1\tcol2"
     assert lines[1] == "sample1\t1\t2"
     assert lines[2] == "sample2\t3\t4"
-

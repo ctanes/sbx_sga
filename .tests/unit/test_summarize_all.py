@@ -1,4 +1,5 @@
 import pytest
+
 pandas = pytest.importorskip("pandas")
 from summarize_all import process_filelines, summarize_all
 
@@ -22,4 +23,3 @@ def test_summarize_all(tmp_path):
     df = pandas.read_csv(output, sep="\t")
     assert list(df.columns) == ["SampleID", "A", "B"]
     assert df.iloc[0].tolist() == ["s1", 1, 2]
-

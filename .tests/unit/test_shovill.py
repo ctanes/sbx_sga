@@ -40,4 +40,3 @@ def test_write_shovill_stats(tmp_path):
     lines = fp_out.read_text().splitlines()
     assert lines[0] == "number of contigs\tmin coverage\tmax coverage\tmean coverage"
     assert lines[1] == "2\t78.8\t86.0\t79.93"
-
