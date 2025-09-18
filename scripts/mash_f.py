@@ -1,28 +1,24 @@
 import os
 import re
-from typing import Iterable, Optional, Sequence, Set, TextIO, Tuple
+from typing import Callable, Iterable, Optional, Sequence, Set, Tuple
 
 
-def log(message: str, log_file: TextIO) -> None:
-    log_file.write(f"[mash_f] {message}\n")
-    if hasattr(log_file, "flush"):
-        log_file.flush()
+LogFunc = Callable[[str], None]
 
 
-def open_report(report: str, log_file: TextIO) -> Tuple[str, Sequence[str]]:
+def open_report(report: str, log: LogFunc) -> Tuple[str, Sequence[str]]:
     sample_name = os.path.basename(report.split("_sorted_winning.tab")[0])
     with open(report, "r") as report_obj:
         filelines = report_obj.readlines()
     top_lines = filelines[:20]
     log(
-        f"Opened report {report} for sample {sample_name}; "
-        f"total_lines={len(filelines)}, taking top {len(top_lines)}",
-        log_file,
+        f"[mash_f] Opened report {report} for sample {sample_name}; "
+        f"total_lines={len(filelines)}, taking top {len(top_lines)}"
     )
     return sample_name, top_lines
 
 
-def process_mash_line(line: str, log_file: TextIO) -> Tuple[str, float, float, int]:
+def process_mash_line(line: str, log: LogFunc) -> Tuple[str, float, float, int]:
     line_list = line.rstrip().split("\t")
     species_line = line_list[-1]
     matches = re.findall(r"N[A-Z]_[0-9A-Z]+\.[0-9]", species_line)
@@ -38,29 +34,30 @@ def process_mash_line(line: str, log_file: TextIO) -> Tuple[str, float, float, i
     identity = float(line_list[0])
     hits = int(line_list[1].split("/")[0])
     log(
-        "Processed mash line with species="
-        f"{species}, identity={identity}, hits={hits}, median_multiplicity={median_multiplicity}",
-        log_file,
+        "[mash_f] Processed mash line with species="
+        f"{species}, identity={identity}, hits={hits}, median_multiplicity={median_multiplicity}"
     )
     return species, median_multiplicity, identity, hits
 
 
-def get_first_non_phage_hit(lines: Iterable[str], log_file: TextIO) -> Tuple[Optional[Tuple[str, float, float, int]], Optional[int]]:
+def get_first_non_phage_hit(
+    lines: Iterable[str], log: LogFunc
+) -> Tuple[Optional[Tuple[str, float, float, int]], Optional[int]]:
     for idx, line in enumerate(lines):
         if "phage" not in line.lower():
-            log(f"Found first non-phage hit at index {idx}", log_file)
-            return process_mash_line(line, log_file), idx
-    log("No non-phage hits detected in top lines", log_file)
+            log(f"[mash_f] Found first non-phage hit at index {idx}")
+            return process_mash_line(line, log), idx
+    log("[mash_f] No non-phage hits detected in top lines")
     return None, None
 
 
-def parse_report(top_lines: Sequence[str], log_file: TextIO) -> Set[str]:
+def parse_report(top_lines: Sequence[str], log: LogFunc) -> Set[str]:
     target_species: Set[str] = set()
 
-    result = get_first_non_phage_hit(top_lines, log_file)
+    result = get_first_non_phage_hit(top_lines, log)
 
     if result == (None, None):
-        log("parse_report returning empty set due to lack of non-phage hits", log_file)
+        log("[mash_f] parse_report returning empty set due to lack of non-phage hits")
         return target_species
 
     # Get top non-phage hit and its index
@@ -68,40 +65,40 @@ def parse_report(top_lines: Sequence[str], log_file: TextIO) -> Set[str]:
 
     if (top_identity >= 0.85) and (top_hits >= 100):
         target_species.add(top_species)
-        log(f"Top hit passes thresholds: {top_species}", log_file)
+        log(f"[mash_f] Top hit passes thresholds: {top_species}")
 
     # Set the threshold for median multiplicity
     threshold = 0.05 * top_median_multiplicity
-    log(f"Median multiplicity threshold set to {threshold}", log_file)
+    log(f"[mash_f] Median multiplicity threshold set to {threshold}")
 
     # Iterate through the rest of the hits, excluding top_index
     for i, line in enumerate(top_lines):
         if i == top_index:
             continue
-        species, median_multiplicity, identity, hits = process_mash_line(line, log_file)
+        species, median_multiplicity, identity, hits = process_mash_line(line, log)
         if (identity >= 0.85) and (hits >= 100):
             if any(term in species for term in ["phage", "Phage", "sp."]):
                 continue
             if median_multiplicity >= threshold:
                 target_species.add(species)
-                log(f"Adding additional species {species}", log_file)
+                log(f"[mash_f] Adding additional species {species}")
 
-    log(f"parse_report returning {target_species}", log_file)
+    log(f"[mash_f] parse_report returning {target_species}")
     return target_species
 
 
-def contamination_call(target_set: Set[str], log_file: TextIO):
+def contamination_call(target_set: Set[str], log: LogFunc):
     mash_dict = {}
     if len(target_set) <= 1:
         mash_dict["NA"] = ""
     else:
         species = " ".join(sorted(target_set))
         mash_dict["Contaminated"] = species
-    log(f"contamination_call produced {mash_dict}", log_file)
+    log(f"[mash_f] contamination_call produced {mash_dict}")
     return mash_dict
 
 
-def write_report(output: str, sample_name: str, mash_dict, log_file: TextIO):
+def write_report(output: str, sample_name: str, mash_dict, log: LogFunc):
     # Expecting that the dictionary is just one key-value pair, so need to check that
     if len(mash_dict) == 1:
         status = list(mash_dict.keys())[0]
@@ -110,12 +107,12 @@ def write_report(output: str, sample_name: str, mash_dict, log_file: TextIO):
         raise ValueError(
             f"Expected mash_dict to have exactly one key-value pair, but got {len(mash_dict)}."
         )
-    log(f"Writing Mash report for {sample_name} with status={status}", log_file)
+    log(f"[mash_f] Writing Mash report for {sample_name} with status={status}")
     with open(output, "w") as out:
         if status == "Contaminated":
             contaminated_spp = mash_dict[status]
             out.write(f"{sample_name}\tContaminated\t{contaminated_spp}\n")
         else:
             out.write(f"{sample_name}\tNA\tNA\n")
-    log(f"Completed writing Mash report to {output}", log_file)
+    log(f"[mash_f] Completed writing Mash report to {output}")
     return output

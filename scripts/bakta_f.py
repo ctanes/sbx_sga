@@ -1,16 +1,13 @@
 import csv
 from io import StringIO
-from typing import TextIO
+from typing import Callable
 
 
-def log(message: str, log_file: TextIO) -> None:
-    log_file.write(f"[bakta_f] {message}\n")
-    if hasattr(log_file, "flush"):
-        log_file.flush()
+LogFunc = Callable[[str], None]
 
 
-def parse_file(filelines, log_file: TextIO):
-    log(f"Parsing {len(filelines)} raw lines from Bakta report", log_file)
+def parse_file(filelines, log: LogFunc):
+    log(f"[bakta_f] Parsing {len(filelines)} raw lines from Bakta report")
     parsed_dict = {}
     if len(filelines) != 0:
         for line in filelines:
@@ -21,14 +18,18 @@ def parse_file(filelines, log_file: TextIO):
             except Exception:
                 continue
             parsed_dict[key] = value
-            log(f"Captured entry key={key!r} value={value!r}", log_file)
+            log(f"[bakta_f] Captured entry key={key!r} value={value!r}")
     return parsed_dict
 
 
 def test_parse():
     lines = ["Annotation:\n", "test: 9\n", "a: 10\n", "\n", "d: 1343\n"]
     buffer = StringIO()
-    assert parse_file(lines, buffer) == {
+
+    def test_log(message: str) -> None:
+        buffer.write(f"{message}\n")
+
+    assert parse_file(lines, test_log) == {
         "Annotation": "",
         "test": "9",
         "a": "10",
@@ -36,12 +37,11 @@ def test_parse():
     }
 
 
-def filter_keys(parsed_dict, log_file: TextIO):
+def filter_keys(parsed_dict, log: LogFunc):
     filtered = {key: value for key, value in parsed_dict.items() if value != ""}
     log(
-        "Filtered parsed entries: "
-        f"kept {len(filtered)} of {len(parsed_dict)} keys with non-empty values",
-        log_file,
+        "[bakta_f] Filtered parsed entries: "
+        f"kept {len(filtered)} of {len(parsed_dict)} keys with non-empty values"
     )
     return filtered
 
@@ -49,22 +49,25 @@ def filter_keys(parsed_dict, log_file: TextIO):
 def test_filter():
     test = {"Annotation": "", "test": "9", "a": "10", "d": "1343"}
     buffer = StringIO()
-    assert filter_keys(test, buffer) == {"test": "9", "a": "10", "d": "1343"}
+
+    def test_log(message: str) -> None:
+        buffer.write(f"{message}\n")
+
+    assert filter_keys(test, test_log) == {"test": "9", "a": "10", "d": "1343"}
 
 
-def write_to_report(report_fp, output_fp, log_file: TextIO):
-    log(f"Opening Bakta report at {report_fp}", log_file)
+def write_to_report(report_fp, output_fp, log: LogFunc):
+    log(f"[bakta_f] Opening Bakta report at {report_fp}")
     with open(report_fp, "r") as f_in:
         lines = f_in.readlines()
 
-    parsed_dict = parse_file(lines, log_file)
-    filtered = filter_keys(parsed_dict, log_file)
+    parsed_dict = parse_file(lines, log)
+    filtered = filter_keys(parsed_dict, log)
 
     with open(output_fp, "w") as op:
         writer = csv.writer(op, delimiter="\t")
         writer.writerow(filtered.keys())
         writer.writerow(filtered.values())
     log(
-        f"Wrote Bakta summary with {len(filtered)} keys to {output_fp}",
-        log_file,
+        f"[bakta_f] Wrote Bakta summary with {len(filtered)} keys to {output_fp}"
     )
