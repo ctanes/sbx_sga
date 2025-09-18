@@ -62,6 +62,10 @@ rule shovill_summary:
         contigs=ISOLATE_FP / "shovill" / "{sample}" / "{sample}.fa",
     output:
         statistics=ISOLATE_FP / "shovill" / "{sample}" / "parsed_summary.tsv",
+    log:
+        LOG_FP / "sga_shovill_summary_{sample}.log",
+    benchmark:
+        BENCHMARK_FP / "sga_shovill_summary_{sample}.tsv"
     script:
         "scripts/shovill.py"
 
@@ -77,6 +81,10 @@ rule combine_shovill_summary:
     params:
         suffix="",
         header=True,
+    log:
+        LOG_FP / "sga_combine_shovill_summary.log",
+    benchmark:
+        BENCHMARK_FP / "sga_combine_shovill_summary.tsv"
     script:
         "scripts/concat_files.py"
 
@@ -223,6 +231,10 @@ rule mash_summary:
         sorted_reports=ISOLATE_FP / "mash" / "{sample}" / "{sample}_sorted_winning.tab",
     output:
         summary=ISOLATE_FP / "mash" / "{sample}" / "{sample}_summary.tsv",
+    log:
+        LOG_FP / "sga_mash_summary_{sample}.log",
+    benchmark:
+        BENCHMARK_FP / "sga_mash_summary_{sample}.tsv"
     script:
         "scripts/mash.py"
 
@@ -269,6 +281,10 @@ rule mlst_parse:
         reports=ISOLATE_FP / "mlst" / "{sample}" / "{sample}.mlst",
     output:
         mlst_report=ISOLATE_FP / "mlst" / "{sample}" / "parsed_mlst.txt",
+    log:
+        LOG_FP / "sga_mlst_parse_{sample}.log",
+    benchmark:
+        BENCHMARK_FP / "sga_mlst_parse_{sample}.tsv"
     script:
         "scripts/mlst.py"
 
@@ -283,6 +299,10 @@ rule mlst_summary:
     params:
         suffix="",
         header=True,
+    log:
+        LOG_FP / "sga_mlst_summary.log",
+    benchmark:
+        BENCHMARK_FP / "sga_mlst_summary.tsv"
     script:
         "scripts/concat_files.py"
 
@@ -320,6 +340,10 @@ rule parse_bakta_report:
         bakta=ISOLATE_FP / "bakta" / "{sample}" / "{sample}.txt",
     output:
         parsed_report=ISOLATE_FP / "bakta" / "{sample}" / "parsed_summary.tsv",
+    log:
+        LOG_FP / "sga_bakta_parse_{sample}.log",
+    benchmark:
+        BENCHMARK_FP / "sga_bakta_parse_{sample}.tsv"
     script:
         "scripts/bakta.py"
 
@@ -334,6 +358,10 @@ rule combine_bakta_summary:
     params:
         suffix="",
         header=True,
+    log:
+        LOG_FP / "sga_combine_bakta_summary.log",
+    benchmark:
+        BENCHMARK_FP / "sga_combine_bakta_summary.tsv"
     script:
         "scripts/concat_files.py"
 
@@ -375,6 +403,10 @@ rule abritamr_summary:
     params:
         suffix="",
         header=True,
+    log:
+        LOG_FP / "sga_abritamr_summary.log",
+    benchmark:
+        BENCHMARK_FP / "sga_abritamr_summary.tsv"
     script:
         "scripts/concat_files.py"
 
@@ -387,6 +419,10 @@ rule all_summary:
         final_report=ISOLATE_FP / "final_summary.tsv",
     params:
         tools=TOOLS,
+    log:
+        LOG_FP / "sga_all_summary.log",
+    benchmark:
+        BENCHMARK_FP / "sga_all_summary.tsv"
     script:
         "scripts/summarize_all.py"
 

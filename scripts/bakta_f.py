@@ -3,7 +3,12 @@ import os
 import csv
 
 
+def log(message: str) -> None:
+    sys.stderr.write(f"[bakta_f] {message}\n")
+
+
 def parse_file(filelines):
+    log(f"Parsing {len(filelines)} raw lines from Bakta report")
     parsed_dict = {}
     if len(filelines) != 0:
         for line in filelines:
@@ -14,6 +19,7 @@ def parse_file(filelines):
             except:
                 continue
             parsed_dict[key] = value
+            log(f"Captured entry key={key!r} value={value!r}")
     return parsed_dict
 
 
@@ -23,7 +29,12 @@ def test_parse():
 
 
 def filter_keys(parsed_dict):
-    return {key: value for key, value in parsed_dict.items() if value != ""}
+    filtered = {key: value for key, value in parsed_dict.items() if value != ""}
+    log(
+        "Filtered parsed entries: "
+        f"kept {len(filtered)} of {len(parsed_dict)} keys with non-empty values"
+    )
+    return filtered
 
 
 def test_filter():
@@ -32,6 +43,7 @@ def test_filter():
 
 
 def write_to_report(report_fp, output_fp):
+    log(f"Opening Bakta report at {report_fp}")
     with open(report_fp, "r") as f_in:
         lines = f_in.readlines()
 
@@ -42,3 +54,6 @@ def write_to_report(report_fp, output_fp):
         writer = csv.writer(op, delimiter="\t")
         writer.writerow(filtered.keys())
         writer.writerow(filtered.values())
+    log(
+        f"Wrote Bakta summary with {len(filtered)} keys to {output_fp}"
+    )
