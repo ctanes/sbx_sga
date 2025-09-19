@@ -81,6 +81,7 @@ rule sga_genomad_end_to_end:
         DB_DIR=$(dirname {input.db_version})
         
         if [ ! -s {input.contigs} ]; then
+            echo "Empty input assembly file {input.contigs}, creating empty summary files" > {log}
             mkdir -p ${{ASSEMBLY_SUMMARY_DIR}}
             touch {output.plasmid_summary}
             touch {output.virus_summary}

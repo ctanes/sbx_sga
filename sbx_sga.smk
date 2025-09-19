@@ -108,8 +108,8 @@ rule sga_sylph:
     shell:
         """
     if [ $(zcat {input.rp1} | wc -l) -ge 4 ] && [ $(zcat {input.rp2} | wc -l) -ge 4 ]; then
-        sylph sketch -1 "{input.rp1}" -2 "{input.rp2}" -t 1 -d "$(dirname "{output.report}")"
-        sylph profile "{params.ref}" "$(dirname "{output.report}")"/*.sylsp -t {threads} -o "{output.report}" 2> "{log}"
+        sylph sketch -1 "{input.rp1}" -2 "{input.rp2}" -t 1 -d "$(dirname "{output.report}")" > "{log}" 2>&1
+        sylph profile "{params.ref}" "$(dirname "{output.report}")"/*.sylsp -t {threads} -o "{output.report}" >> "{log}" 2>&1
     else
         touch {output.report}
     fi
