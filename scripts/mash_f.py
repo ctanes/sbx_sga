@@ -95,9 +95,7 @@ def parse_report(
     return target_species
 
 
-def contamination_call(
-    target_set: Set[str], log: Callable[[str], None] = _noop_log
-):
+def contamination_call(target_set: Set[str], log: Callable[[str], None] = _noop_log):
     mash_dict = {}
     if len(target_set) <= 1:
         mash_dict["NA"] = ""
