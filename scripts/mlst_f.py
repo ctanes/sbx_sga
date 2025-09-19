@@ -3,10 +3,7 @@ from io import StringIO
 from typing import Callable
 
 
-LogFunc = Callable[[str], None]
-
-
-def smush_column(line, log: LogFunc):
+def smush_column(line, log: Callable[[str], None]):
     line_parsed = []
     log(f"[mlst_f] Processing MLST line: {line}")
     if line:
@@ -45,7 +42,7 @@ def test_smush_column():
     ]
 
 
-def write_to_report(report, output, log: LogFunc):
+def write_to_report(report, output, log: Callable[[str], None]):
     log(f"[mlst_f] Writing MLST summary from {report} to {output}")
     with open(report, "r") as f_in:
         reader = csv.reader(f_in, delimiter="\t")

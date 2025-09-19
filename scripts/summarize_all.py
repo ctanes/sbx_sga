@@ -5,10 +5,7 @@ from typing import Callable
 import pandas as pd
 
 
-LogFunc = Callable[[str], None]
-
-
-def process_filelines(fp, columns, log: LogFunc):
+def process_filelines(fp, columns, log: Callable[[str], None]):
     log(f"[summarize_all] Reading file {fp} with columns {columns}")
     df = pd.read_csv(fp, sep="\t")
     columns.insert(0, "SampleID")
@@ -16,7 +13,7 @@ def process_filelines(fp, columns, log: LogFunc):
     return df[columns]
 
 
-def summarize_all(input_files, output, tools, log: LogFunc):
+def summarize_all(input_files, output, tools, log: Callable[[str], None]):
     log(
         "[summarize_all] Starting summarize_all for "
         f"{len(input_files)} files into {output}. "

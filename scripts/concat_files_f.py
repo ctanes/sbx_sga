@@ -1,12 +1,14 @@
 import csv
 import os
-from typing import Callable, Iterable
+from typing import Callable, Iterable, Optional
 
 
-LogFunc = Callable[[str], None]
-
-
-def write_report(writer, report_reader: Iterable[list], sample_name: str, log: LogFunc):
+def write_report(
+    writer,
+    report_reader: Iterable[list],
+    sample_name: str,
+    log: Callable[[str], None],
+):
     log(f"[concat_files_f] Writing rows for sample {sample_name}")
     for row in report_reader:
         row.insert(0, sample_name)
@@ -18,7 +20,7 @@ def summarize_all(
     out_fp,
     folder_suffix="",
     header=True,
-    log: LogFunc = None,
+    log: Optional[Callable[[str], None]] = None,
 ):
     if log is None:
         raise ValueError("log must be provided for summarize_all")
