@@ -123,6 +123,10 @@ rule combine_sylph_summary:
         ),
     output:
         all_summary=ISOLATE_FP / "reports" / "sylph.report",
+    log:
+        LOG_FP / "sga_combine_sylph_summary.log",
+    benchmark:
+        BENCHMARK_FP / "sga_combine_sylph_summary.tsv"
     params:
         suffix="",
         header=True,
@@ -167,6 +171,10 @@ rule combine_checkm_summary:
         ),
     output:
         all_summary=ISOLATE_FP / "reports" / "checkm.report",
+    log:
+        LOG_FP / "sga_combine_checkm_summary.log",
+    benchmark:
+        BENCHMARK_FP / "sga_combine_checkm_summary.tsv"
     params:
         suffix="",
         header=True,
