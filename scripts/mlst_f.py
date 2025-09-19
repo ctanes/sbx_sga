@@ -3,7 +3,12 @@ from io import StringIO
 from typing import Callable
 
 
-def smush_column(line, log: Callable[[str], None]):
+def _noop_log(message: str) -> None:
+    """Default logger that ignores messages when no logger is provided."""
+    pass
+
+
+def smush_column(line, log: Callable[[str], None] = _noop_log):
     line_parsed = []
     log(f"[mlst_f] Processing MLST line: {line}")
     if line:
@@ -42,7 +47,7 @@ def test_smush_column():
     ]
 
 
-def write_to_report(report, output, log: Callable[[str], None]):
+def write_to_report(report, output, log: Callable[[str], None] = _noop_log):
     log(f"[mlst_f] Writing MLST summary from {report} to {output}")
     with open(report, "r") as f_in:
         reader = csv.reader(f_in, delimiter="\t")

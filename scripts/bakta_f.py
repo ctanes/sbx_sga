@@ -3,7 +3,14 @@ from io import StringIO
 from typing import Callable
 
 
-def parse_file(filelines, log: Callable[[str], None]):
+def _noop_log(message: str) -> None:
+    """Default logger used when no log callable is supplied."""
+    pass
+
+
+
+
+def parse_file(filelines, log: Callable[[str], None] = _noop_log):
     log(f"[bakta_f] Parsing {len(filelines)} raw lines from Bakta report")
     parsed_dict = {}
     if len(filelines) != 0:
@@ -34,7 +41,7 @@ def test_parse():
     }
 
 
-def filter_keys(parsed_dict, log: Callable[[str], None]):
+def filter_keys(parsed_dict, log: Callable[[str], None] = _noop_log):
     filtered = {key: value for key, value in parsed_dict.items() if value != ""}
     log(
         "[bakta_f] Filtered parsed entries: "
@@ -53,7 +60,9 @@ def test_filter():
     assert filter_keys(test, test_log) == {"test": "9", "a": "10", "d": "1343"}
 
 
-def write_to_report(report_fp, output_fp, log: Callable[[str], None]):
+def write_to_report(
+    report_fp, output_fp, log: Callable[[str], None] = _noop_log
+):
     log(f"[bakta_f] Opening Bakta report at {report_fp}")
     with open(report_fp, "r") as f_in:
         lines = f_in.readlines()

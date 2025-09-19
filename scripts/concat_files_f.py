@@ -3,11 +3,16 @@ import os
 from typing import Callable, Iterable, Optional
 
 
+def _noop_log(message: str) -> None:
+    """Default logger that ignores messages when no logger is provided."""
+    pass
+
+
 def write_report(
     writer,
     report_reader: Iterable[list],
     sample_name: str,
-    log: Callable[[str], None],
+    log: Callable[[str], None] = _noop_log,
 ):
     log(f"[concat_files_f] Writing rows for sample {sample_name}")
     for row in report_reader:
@@ -23,7 +28,7 @@ def summarize_all(
     log: Optional[Callable[[str], None]] = None,
 ):
     if log is None:
-        raise ValueError("log must be provided for summarize_all")
+        log = _noop_log
 
     log(
         "[concat_files_f] Preparing to summarize "
