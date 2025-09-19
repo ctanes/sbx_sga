@@ -108,8 +108,8 @@ rule sga_sylph:
     shell:
         """
     if [ $(zcat {input.rp1} | wc -l) -ge 4 ] && [ $(zcat {input.rp2} | wc -l) -ge 4 ]; then
-        sylph sketch -1 "{input.rp1}" -2 "{input.rp2}" -t 1 -d "$(dirname "{output.report}")"
-        sylph profile "{params.ref}" "$(dirname "{output.report}")"/*.sylsp -t {threads} -o "{output.report}" 2> "{log}"
+        sylph sketch -1 "{input.rp1}" -2 "{input.rp2}" -t 1 -d "$(dirname "{output.report}")" > "{log}" 2>&1
+        sylph profile "{params.ref}" "$(dirname "{output.report}")"/*.sylsp -t {threads} -o "{output.report}" >> "{log}" 2>&1
     else
         touch {output.report}
     fi
@@ -123,6 +123,10 @@ rule combine_sylph_summary:
         ),
     output:
         all_summary=ISOLATE_FP / "reports" / "sylph.report",
+    log:
+        LOG_FP / "sga_combine_sylph_summary.log",
+    benchmark:
+        BENCHMARK_FP / "sga_combine_sylph_summary.tsv"
     params:
         suffix="",
         header=True,
@@ -167,6 +171,10 @@ rule combine_checkm_summary:
         ),
     output:
         all_summary=ISOLATE_FP / "reports" / "checkm.report",
+    log:
+        LOG_FP / "sga_combine_checkm_summary.log",
+    benchmark:
+        BENCHMARK_FP / "sga_combine_checkm_summary.tsv"
     params:
         suffix="",
         header=True,

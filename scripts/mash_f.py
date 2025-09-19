@@ -3,7 +3,14 @@ import re
 from typing import Callable, Iterable, Optional, Sequence, Set, Tuple
 
 
-def open_report(report: str, log: Callable[[str], None]) -> Tuple[str, Sequence[str]]:
+def _noop_log(message: str) -> None:
+    """Default logger that ignores messages when no logger is provided."""
+    pass
+
+
+def open_report(
+    report: str, log: Callable[[str], None] = _noop_log
+) -> Tuple[str, Sequence[str]]:
     sample_name = os.path.basename(report.split("_sorted_winning.tab")[0])
     with open(report, "r") as report_obj:
         filelines = report_obj.readlines()
@@ -16,7 +23,7 @@ def open_report(report: str, log: Callable[[str], None]) -> Tuple[str, Sequence[
 
 
 def process_mash_line(
-    line: str, log: Callable[[str], None]
+    line: str, log: Callable[[str], None] = _noop_log
 ) -> Tuple[str, float, float, int]:
     line_list = line.rstrip().split("\t")
     species_line = line_list[-1]
@@ -40,7 +47,7 @@ def process_mash_line(
 
 
 def get_first_non_phage_hit(
-    lines: Iterable[str], log: Callable[[str], None]
+    lines: Iterable[str], log: Callable[[str], None] = _noop_log
 ) -> Tuple[Optional[Tuple[str, float, float, int]], Optional[int]]:
     for idx, line in enumerate(lines):
         if "phage" not in line.lower():
@@ -50,7 +57,9 @@ def get_first_non_phage_hit(
     return None, None
 
 
-def parse_report(top_lines: Sequence[str], log: Callable[[str], None]) -> Set[str]:
+def parse_report(
+    top_lines: Sequence[str], log: Callable[[str], None] = _noop_log
+) -> Set[str]:
     target_species: Set[str] = set()
 
     result = get_first_non_phage_hit(top_lines, log)
@@ -86,7 +95,7 @@ def parse_report(top_lines: Sequence[str], log: Callable[[str], None]) -> Set[st
     return target_species
 
 
-def contamination_call(target_set: Set[str], log: Callable[[str], None]):
+def contamination_call(target_set: Set[str], log: Callable[[str], None] = _noop_log):
     mash_dict = {}
     if len(target_set) <= 1:
         mash_dict["NA"] = ""
@@ -101,7 +110,7 @@ def write_report(
     output: str,
     sample_name: str,
     mash_dict,
-    log: Callable[[str], None],
+    log: Callable[[str], None] = _noop_log,
 ):
     # Expecting that the dictionary is just one key-value pair, so need to check that
     if len(mash_dict) == 1:

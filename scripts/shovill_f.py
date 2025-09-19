@@ -4,7 +4,14 @@ from io import StringIO
 from typing import Callable, Iterable, List
 
 
-def get_fasta_headers(f_in: Iterable[str], log: Callable[[str], None]) -> List[str]:
+def _noop_log(message: str) -> None:
+    """Default logger that ignores messages when no logger is provided."""
+    pass
+
+
+def get_fasta_headers(
+    f_in: Iterable[str], log: Callable[[str], None] = _noop_log
+) -> List[str]:
     headers = []
     for line in f_in:
         if line.startswith(">"):
@@ -27,7 +34,7 @@ def test_get_fasta_headers():
     assert headers == [">s1", ">s2"]
 
 
-def parse_header(header: str, log: Callable[[str], None]):
+def parse_header(header: str, log: Callable[[str], None] = _noop_log):
     header = header.split()[1:]  # gets rid of the contig name
     header_dict = dict(item.split("=") for item in header)
     header_dict["len"] = int(header_dict["len"])
@@ -60,7 +67,7 @@ def test_parse_header2():
     assert cov == {"len": 122482, "cov": 39}
 
 
-def calc_cov_stats(contig_stats, log: Callable[[str], None]):
+def calc_cov_stats(contig_stats, log: Callable[[str], None] = _noop_log):
     total_ctgs = len(contig_stats)
     min_cov = min(c["cov"] for c in contig_stats)
     max_cov = max(c["cov"] for c in contig_stats)
@@ -86,7 +93,9 @@ def test_calc_cov_stats():
     assert calc_cov_stats(d, test_log) == [2, 2, 10, 4.29]
 
 
-def write_shovill_stats(fp_in: str, fp_out: str, log: Callable[[str], None]):
+def write_shovill_stats(
+    fp_in: str, fp_out: str, log: Callable[[str], None] = _noop_log
+):
     log(f"[shovill_f] Writing Shovill statistics from {fp_in} to {fp_out}")
     if not os.path.exists(fp_in):
         raise FileNotFoundError(f"Input FASTA {fp_in} does not exist")
