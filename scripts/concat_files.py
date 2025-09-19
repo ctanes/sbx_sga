@@ -2,10 +2,10 @@ from concat_files_f import summarize_all
 
 
 with open(snakemake.log[0], "w") as log_file:
+
     def log(message: str) -> None:
         log_file.write(f"[concat_files.py] {message}\n")
         log_file.flush()
-
 
     input_files = list(snakemake.input)
     output_path = snakemake.output[0]

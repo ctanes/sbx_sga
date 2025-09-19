@@ -4,9 +4,7 @@ from io import StringIO
 from typing import Callable, Iterable, List
 
 
-def get_fasta_headers(
-    f_in: Iterable[str], log: Callable[[str], None]
-) -> List[str]:
+def get_fasta_headers(f_in: Iterable[str], log: Callable[[str], None]) -> List[str]:
     headers = []
     for line in f_in:
         if line.startswith(">"):

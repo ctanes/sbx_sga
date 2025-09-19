@@ -65,6 +65,4 @@ def write_to_report(report_fp, output_fp, log: Callable[[str], None]):
         writer = csv.writer(op, delimiter="\t")
         writer.writerow(filtered.keys())
         writer.writerow(filtered.values())
-    log(
-        f"[bakta_f] Wrote Bakta summary with {len(filtered)} keys to {output_fp}"
-    )
+    log(f"[bakta_f] Wrote Bakta summary with {len(filtered)} keys to {output_fp}")

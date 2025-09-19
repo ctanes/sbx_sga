@@ -36,7 +36,9 @@ def summarize_all(
         for report_path in report_paths:
             log(f"[concat_files_f] Processing report {report_path}")
             if os.path.getsize(report_path) < 5:
-                log(f"[concat_files_f] Skipping {report_path} because file is nearly empty")
+                log(
+                    f"[concat_files_f] Skipping {report_path} because file is nearly empty"
+                )
                 continue
             sample_name = os.path.basename(os.path.dirname(report_path))
             sample_name = sample_name.removesuffix(folder_suffix)

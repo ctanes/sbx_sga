@@ -2,10 +2,10 @@ from bakta_f import write_to_report
 
 
 with open(snakemake.log[0], "w") as log_file:
+
     def log(message: str) -> None:
         log_file.write(f"[bakta.py] {message}\n")
         log_file.flush()
-
 
     report = snakemake.input[0]
     output = snakemake.output[0]

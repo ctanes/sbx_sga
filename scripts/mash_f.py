@@ -3,9 +3,7 @@ import re
 from typing import Callable, Iterable, Optional, Sequence, Set, Tuple
 
 
-def open_report(
-    report: str, log: Callable[[str], None]
-) -> Tuple[str, Sequence[str]]:
+def open_report(report: str, log: Callable[[str], None]) -> Tuple[str, Sequence[str]]:
     sample_name = os.path.basename(report.split("_sorted_winning.tab")[0])
     with open(report, "r") as report_obj:
         filelines = report_obj.readlines()
@@ -39,7 +37,7 @@ def process_mash_line(
         f"{species}, identity={identity}, hits={hits}, median_multiplicity={median_multiplicity}"
     )
     return species, median_multiplicity, identity, hits
- 
+
 
 def get_first_non_phage_hit(
     lines: Iterable[str], log: Callable[[str], None]

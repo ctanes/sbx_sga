@@ -43,10 +43,10 @@ def summarize_all(input_files, output, tools, log: Callable[[str], None]):
 
 
 with open(snakemake.log[0], "w") as log_file:
+
     def log(message: str) -> None:
         log_file.write(f"[summarize_all.py] {message}\n")
         log_file.flush()
-
 
     log("Invoked via Snakemake")
     summarize_all(snakemake.input, snakemake.output[0], snakemake.params.tools, log)
