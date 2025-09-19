@@ -84,5 +84,9 @@ rule snippy_summary:
     params:
         suffix="",
         header=True,
+    log:
+        LOG_FP / "sga_snippy_summary.log",
+    benchmark:
+        BENCHMARK_FP / "sga_snippy_summary.tsv"
     script:
         "scripts/concat_files.py"

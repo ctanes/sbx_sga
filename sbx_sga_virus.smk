@@ -110,6 +110,10 @@ rule sga_plasmid_classification_summary:
     params:
         suffix="_summary",
         header=True,
+    log:
+        LOG_FP / "sga_plasmid_classification_summary.log",
+    benchmark:
+        BENCHMARK_FP / "sga_plasmid_classification_summary.tsv"
     script:
         "scripts/concat_files.py"
 
@@ -132,6 +136,10 @@ rule sga_phage_classification_summary:
     params:
         suffix="_summary",
         header=True,
+    log:
+        LOG_FP / "sga_phage_classification_summary.log",
+    benchmark:
+        BENCHMARK_FP / "sga_phage_classification_summary.tsv"
     script:
         "scripts/concat_files.py"
 
@@ -152,6 +160,10 @@ rule sga_plasmid_gene_summary:
     params:
         suffix="_summary",
         header=True,
+    log:
+        LOG_FP / "sga_plasmid_gene_summary.log",
+    benchmark:
+        BENCHMARK_FP / "sga_plasmid_gene_summary.tsv"
     script:
         "scripts/concat_files.py"
 
@@ -172,5 +184,9 @@ rule sga_virus_gene_summary:
     params:
         suffix="_summary",
         header=True,
+    log:
+        LOG_FP / "sga_virus_gene_summary.log",
+    benchmark:
+        BENCHMARK_FP / "sga_virus_gene_summary.tsv"
     script:
         "scripts/concat_files.py"
