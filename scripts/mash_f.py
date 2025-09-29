@@ -22,28 +22,48 @@ def open_report(
     return sample_name, top_lines
 
 
-def process_mash_line(
-    line: str, log: Callable[[str], None] = _noop_log
-) -> Tuple[str, float, float, int]:
-    line_list = line.rstrip().split("\t")
-    species_line = line_list[-1]
-    matches = re.findall(r"N[A-Z]_[0-9A-Z]+\.[0-9]", species_line)
-    if not matches:
-        try:
-            matches = re.findall(r"[A-Z]{2}_[0-9]+\.[0-9]", species_line)
-        except Exception as exc:
-            raise ValueError(f"No match found in species_line: {species_line}") from exc
-    split_char = matches[0]
-    species_split = line.split(split_char)[1].lstrip()
-    species = " ".join(species_split.split()[:2])
-    median_multiplicity = float(line_list[2])
-    identity = float(line_list[0])
-    hits = int(line_list[1].split("/")[0])
-    log(
-        "[mash_f] Processed mash line with species="
-        f"{species}, identity={identity}, hits={hits}, median_multiplicity={median_multiplicity}"
-    )
-    return species, median_multiplicity, identity, hits
+def process_mash_line(line, log: Callable[[str], None] = _noop_log):
+    try:
+        parts = line.strip().split("\t")
+        if len(parts) < 5:
+            return None  # Malformed line
+
+        identity = float(parts[0])
+        median_multiplicity = float(parts[2])
+        hits = int(parts[1].split("/")[0])
+
+        # The last column(s) contain species info
+        # Join remaining parts in case species field has tabs (some formats do)
+        remainder = "\t".join(parts[4:])
+
+        # Try matching common species name patterns
+        species = extract_species_name(remainder)
+
+        return species, median_multiplicity, identity, hits
+    except Exception as e:
+        log(f"[mash_f] Error processing line: {line}. Error: {e}")
+        return "Unknown", 0, 0.0, 0
+
+
+def extract_species_name(s):
+    """Extract genus and species name from string, removing strain information."""
+    # Format 1: ...-Staphylococcus_aureus.fna
+    match = re.search(r"[-_](?P<species>[A-Z][a-z]+_[a-z]+(?:_[\w\d]+)?)\.fna", s)
+    if match:
+        full_name = match.group("species").replace("_", " ")
+    else:
+        # Format 2: ... Enterobacteria phage lambda, complete genome
+        match = re.search(r"([A-Z][a-z]+(?: [a-z]+){1,3})", s)
+        if match:
+            full_name = match.group(1)
+        else:
+            return "Unknown"
+
+    # Extract only genus and species (first two words)
+    name_parts = full_name.split()
+    if len(name_parts) >= 2:
+        return f"{name_parts[0]} {name_parts[1]}"
+    return full_name  # Return full name if it has fewer than 2 parts
 
 
 def get_first_non_phage_hit(

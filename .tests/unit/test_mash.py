@@ -17,6 +17,16 @@ from mash_f import (
 test_data_dir = os.path.join(os.path.dirname(__file__), "test_data")
 
 
+def test_marc_sample(tmp_path):
+    sample_report = os.path.join(
+        test_data_dir, "marc.bacteremia.2902_sorted_winning.tab"
+    )
+    sample_name, top_lines = open_report(sample_report)
+    parsed_report = parse_report(top_lines)
+    mash_dict = contamination_call(parsed_report)
+    report = write_report(tmp_path / "marc_test.out", sample_name, mash_dict)
+
+
 def test_open_report():
     sample_report = os.path.join(test_data_dir, "sample_sorted_winning.tab")
     sample_name, top_lines = open_report(sample_report)
