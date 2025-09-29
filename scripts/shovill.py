@@ -13,7 +13,9 @@ with open(snakemake.log[0], "w") as log_file:
     output = snakemake.output[0]
 
     try:
-        log(f"Starting Shovill stats calculation for genome={genome} -> output={output}")
+        log(
+            f"Starting Shovill stats calculation for genome={genome} -> output={output}"
+        )
         write_shovill_stats(genome, output, log)
         log(f"Finished Shovill stats calculation for {genome}")
     except Exception as error:
