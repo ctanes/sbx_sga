@@ -1,3 +1,5 @@
+import traceback
+
 from mlst_f import write_to_report
 
 
@@ -10,8 +12,13 @@ with open(snakemake.log[0], "w") as log_file:
     report = snakemake.input[0]
     output = snakemake.output[0]
 
-    log(f"Starting MLST parsing for report={report} -> output={output}")
+    try:
+        log(f"Starting MLST parsing for report={report} -> output={output}")
 
-    write_to_report(report, output, log)
+        write_to_report(report, output, log)
 
-    log(f"Finished MLST parsing for {report}")
+        log(f"Finished MLST parsing for {report}")
+    except Exception as error:
+        log(f"Encountered error: {error}")
+        log(traceback.format_exc())
+        raise
