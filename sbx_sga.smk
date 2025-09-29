@@ -48,6 +48,8 @@ rule sga_shovill:
         BENCHMARK_FP / "sga_shovill_{sample}.tsv"
     conda:
         "envs/shovill.yml"
+    resources:
+        mem_mb=32000,
     shell:
         """
         (shovill --force --assembler skesa --outdir $(dirname {output.contigs}) --R1 {input.rp1}  --R2 {input.rp2} &> {log} &&
@@ -105,6 +107,9 @@ rule sga_sylph:
         BENCHMARK_FP / "sga_sylph_{sample}.tsv"
     conda:
         "envs/sylph.yml"
+    resources:
+        mem_mb=32000,
+        runtime=120,
     shell:
         """
     if [ $(zcat {input.rp1} | wc -l) -ge 4 ] && [ $(zcat {input.rp2} | wc -l) -ge 4 ]; then
@@ -148,6 +153,8 @@ rule sga_checkm:
         BENCHMARK_FP / "sga_checkm_{sample}.tsv"
     conda:
         "envs/checkm2.yml"
+    resources:
+        mem_mb=16000,
     shell:
         """
         if [ -s {input.contigs} ]; then
@@ -221,6 +228,8 @@ rule sga_mash:
         BENCHMARK_FP / "sga_mash_{sample}.tsv"
     conda:
         "envs/mash.yml"
+    resources:
+        mem_mb=16000,
     shell:
         """
         zcat {input.reads} > {output.agg}
@@ -329,6 +338,9 @@ rule sga_bakta:
         BENCHMARK_FP / "sga_bakta_{sample}.tsv"
     conda:
         "envs/bakta.yml"
+    resources:
+        mem_mb=32000,
+        runtime=180,
     shell:
         """
         if [ -s {input.contigs} ]; then
