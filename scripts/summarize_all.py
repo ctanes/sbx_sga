@@ -1,4 +1,5 @@
 import os
+import traceback
 from functools import reduce
 from typing import Callable
 
@@ -48,6 +49,16 @@ with open(snakemake.log[0], "w") as log_file:
         log_file.write(f"[summarize_all.py] {message}\n")
         log_file.flush()
 
-    log("Invoked via Snakemake")
-    summarize_all(snakemake.input, snakemake.output[0], snakemake.params.tools, log)
-    log("Completed summarize_all Snakemake execution")
+    try:
+        log("Invoked via Snakemake")
+        summarize_all(
+            snakemake.input,
+            snakemake.output[0],
+            snakemake.params.tools,
+            log,
+        )
+        log("Completed summarize_all Snakemake execution")
+    except Exception as error:
+        log(f"Encountered error: {error}")
+        log(traceback.format_exc())
+        raise

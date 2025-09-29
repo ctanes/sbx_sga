@@ -1,3 +1,5 @@
+import traceback
+
 from shovill_f import write_shovill_stats
 
 
@@ -10,6 +12,11 @@ with open(snakemake.log[0], "w") as log_file:
     genome = snakemake.input[0]
     output = snakemake.output[0]
 
-    log(f"Starting Shovill stats calculation for genome={genome} -> output={output}")
-    write_shovill_stats(genome, output, log)
-    log(f"Finished Shovill stats calculation for {genome}")
+    try:
+        log(f"Starting Shovill stats calculation for genome={genome} -> output={output}")
+        write_shovill_stats(genome, output, log)
+        log(f"Finished Shovill stats calculation for {genome}")
+    except Exception as error:
+        log(f"Encountered error: {error}")
+        log(traceback.format_exc())
+        raise
