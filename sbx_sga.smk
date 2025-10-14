@@ -33,6 +33,7 @@ rule all_sga:
     input:
         expand(ISOLATE_FP / "quast" / "{sample}" / "report.tsv", sample=Samples),
         f"{ISOLATE_FP}/final_summary.tsv",
+        f"{ISOLATE_FP}/reports/amr.report",
 
 
 ## Assembly
