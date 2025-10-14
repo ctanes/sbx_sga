@@ -153,7 +153,7 @@ rule sga_plasmid_gene_summary:
             / "genomad"
             / "{sample}"
             / "{sample}_summary"
-            / "{sample}_virus_genes.tsv",
+            / "{sample}_plasmid_genes.tsv",
             sample=Samples,
         ),
     output:
@@ -177,7 +177,7 @@ rule sga_virus_gene_summary:
             / "genomad"
             / "{sample}"
             / "{sample}_summary"
-            / "{sample}_plasmid_genes.tsv",
+            / "{sample}_virus_genes.tsv",
             sample=Samples,
         ),
     output:
