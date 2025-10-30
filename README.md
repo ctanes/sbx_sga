@@ -17,7 +17,23 @@ sbx_sga (Single Genome Assembly) is a [sunbeam](https://github.com/sunbeam-labs/
   - mash_ref: the reference file for running Mash (should be a file ending in `.msh`)
   - checkm_ref: the diamond database for running CheckM2 (should be a file ending in `.dmnd`)
   - bakta_ref: the bakta reference database (should be a directory similar to `.../bakta_db/db/`)
+  - genomad_ref: the genomad reference database (should be a directory containing many files including `version.txt` (this is what our pipeline checks for to verify it exists))
+  - sylph_ref: the sylph reference database (should be a `.syldb` file)
+  - snippy_ref: the snippy reference genome (should be a fasta with at least a decent quality genome)
     
+## Database installations
+
+```bash
+conda create -n sga_dbs -c conda-forge -c bioconda mash bakta checkm2 genomad diamond prodigal
+conda activate sga_dbs
+```
+
+For making smaller test databases, see `.tests/data/README.md`.
+
+### Genomad
+
+`genomad download-database /path/to/db_storage/`
+  
 ## Docs
 
 More [docs](https://sunbeam.readthedocs.io/en/stable/extensions.html).

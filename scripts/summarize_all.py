@@ -1,64 +1,56 @@
-import os
-import traceback
-from functools import reduce
-from typing import Callable
-
 import pandas as pd
+import traceback
+from pathlib import Path
+from .tools import (
+    BaktaOutput,
+    CheckMOutput,
+    MashOutput,
+    MLSTOutput,
+    ShovillOutput,
+    SylphOutput,
+    ToolOutput,
+)
 
 
-def process_filelines(fp, columns, log: Callable[[str], None]):
-    log(f"[summarize_all] Reading file {fp} with columns {columns}")
-    df = pd.read_csv(fp, sep="\t")
-    columns.insert(0, "SampleID")
-    log(f"[summarize_all] Reordered columns for {fp}: {columns}")
-    return df[columns]
+if "snakemake" in globals():
+    log_fp = snakemake.log[0]  # type: ignore
+    with open(log_fp, "w") as log:
+        try:
+            log.write("Starting summary script\n")
 
+            reports: list[tuple[Path, type[ToolOutput]]] = [
+                *[(Path(i), BaktaOutput) for i in snakemake.input.bakta],  # type: ignore
+                *[(Path(i), CheckMOutput) for i in snakemake.input.checkm],  # type: ignore
+                *[(Path(i), MashOutput) for i in snakemake.input.mash],  # type: ignore
+                *[(Path(i), MLSTOutput) for i in snakemake.input.mlst],  # type: ignore
+                *[(Path(i), ShovillOutput) for i in snakemake.input.shovill],  # type: ignore
+                *[(Path(i), SylphOutput) for i in snakemake.input.sylph],  # type: ignore
+            ]
+            samples = {fp.parent.name for fp, _ in reports}
+            tool_outputs_per_sample: dict[str, list[ToolOutput]] = {}
+            for sample in samples:
+                sample_tool_outputs = []
+                for fp, tool_cls in reports:
+                    if fp.parent.name != sample:
+                        continue
+                    output = tool_cls.from_report(fp, log.write)
+                    sample_tool_outputs.append(output)
+                tool_outputs_per_sample[sample] = sample_tool_outputs
 
-def summarize_all(input_files, output, tools, log: Callable[[str], None]):
-    log(
-        "[summarize_all] Starting summarize_all for "
-        f"{len(input_files)} files into {output}. "
-        f"Available tools: {list(tools.keys())}"
-    )
-    if not input_files:
-        # Handle empty input_files by writing an empty CSV with just the header
-        empty_df = pd.DataFrame(columns=["SampleID"])
-        empty_df.to_csv(output, index=False, sep="\t")
-        log("[summarize_all] No input files provided; wrote empty summary")
-        return
+            final_summary: list[dict[str, str]] = []
+            for sample, tool_outputs in tool_outputs_per_sample.items():
+                entry = {"SampleID": sample}
+                for to in tool_outputs:
+                    for key in to.KEYS:
+                        entry[key] = to.d.get(key, "NA")
+                final_summary.append(entry)
 
-    master_list = []
-    for fp in input_files:
-        tool = os.path.splitext(os.path.basename(fp))[0]
-        columns = tools[tool]
-        log(f"[summarize_all] Processing tool {tool} for file {fp}")
-        df = process_filelines(fp, columns, log)
-        master_list.append(df)
-
-    final_df = reduce(
-        lambda left, right: pd.merge(left, right, on="SampleID", how="outer"),
-        master_list,
-    )
-    final_df.to_csv(output, index=False, sep="\t")
-    log(f"[summarize_all] Finished writing combined summary to {output}")
-
-
-with open(snakemake.log[0], "w") as log_file:
-
-    def log(message: str) -> None:
-        log_file.write(f"[summarize_all.py] {message}\n")
-        log_file.flush()
-
-    try:
-        log("Invoked via Snakemake")
-        summarize_all(
-            snakemake.input,
-            snakemake.output[0],
-            snakemake.params.tools,
-            log,
-        )
-        log("Completed summarize_all Snakemake execution")
-    except Exception as error:
-        log(f"Encountered error: {error}")
-        log(traceback.format_exc())
-        raise
+            out_fp = snakemake.output[0]  # type: ignore
+            df = pd.DataFrame(final_summary)
+            df = df.sort_values("SampleID")
+            df.to_csv(out_fp, sep="\t", index=False)
+            log.write(f"Wrote final summary to {out_fp}\n")
+        except Exception as error:
+            log.write(f"Encountered error: {error}")
+            log.write(traceback.format_exc())
+            raise

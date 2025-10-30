@@ -27,6 +27,7 @@ except NameError:
 
 localrules:
     all_sga,
+    sga_report,
 
 
 rule all_sga:
@@ -59,39 +60,6 @@ rule sga_shovill:
         """
 
 
-## Parse shovill output
-rule shovill_summary:
-    input:
-        contigs=ISOLATE_FP / "shovill" / "{sample}" / "{sample}.fa",
-    output:
-        statistics=ISOLATE_FP / "shovill" / "{sample}" / "parsed_summary.tsv",
-    log:
-        LOG_FP / "sga_shovill_summary_{sample}.log",
-    benchmark:
-        BENCHMARK_FP / "sga_shovill_summary_{sample}.tsv"
-    script:
-        "scripts/shovill.py"
-
-
-# Combine shovill outputs
-rule combine_shovill_summary:
-    input:
-        reports=expand(
-            ISOLATE_FP / "shovill" / "{sample}" / "parsed_summary.tsv", sample=Samples
-        ),
-    output:
-        shovill_report=ISOLATE_FP / "reports" / "shovill.report",
-    params:
-        suffix="",
-        header=True,
-    log:
-        LOG_FP / "sga_combine_shovill_summary.log",
-    benchmark:
-        BENCHMARK_FP / "sga_combine_shovill_summary.tsv"
-    script:
-        "scripts/concat_files.py"
-
-
 # Taxonomic classification
 rule sga_sylph:
     input:
@@ -120,24 +88,6 @@ rule sga_sylph:
         touch {output.report}
     fi
         """
-
-
-rule combine_sylph_summary:
-    input:
-        summaries=expand(
-            ISOLATE_FP / "sylph" / "{sample}" / "{sample}.tsv", sample=Samples
-        ),
-    output:
-        all_summary=ISOLATE_FP / "reports" / "sylph.report",
-    log:
-        LOG_FP / "sga_combine_sylph_summary.log",
-    benchmark:
-        BENCHMARK_FP / "sga_combine_sylph_summary.tsv"
-    params:
-        suffix="",
-        header=True,
-    script:
-        "scripts/concat_files.py"
 
 
 ### Assembly QC
@@ -170,24 +120,6 @@ rule sga_checkm:
             touch {output.quality_report}
         fi
         """
-
-
-rule combine_checkm_summary:
-    input:
-        summaries=expand(
-            ISOLATE_FP / "checkm" / "{sample}" / "quality_report.tsv", sample=Samples
-        ),
-    output:
-        all_summary=ISOLATE_FP / "reports" / "checkm.report",
-    log:
-        LOG_FP / "sga_combine_checkm_summary.log",
-    benchmark:
-        BENCHMARK_FP / "sga_combine_checkm_summary.tsv"
-    params:
-        suffix="",
-        header=True,
-    script:
-        "scripts/concat_files.py"
 
 
 rule sga_quast:
@@ -244,33 +176,6 @@ rule sga_mash:
         """
 
 
-rule mash_summary:
-    input:
-        sorted_reports=ISOLATE_FP / "mash" / "{sample}" / "{sample}_sorted_winning.tab",
-    output:
-        summary=ISOLATE_FP / "mash" / "{sample}" / "{sample}_summary.tsv",
-    log:
-        LOG_FP / "sga_mash_summary_{sample}.log",
-    benchmark:
-        BENCHMARK_FP / "sga_mash_summary_{sample}.tsv"
-    script:
-        "scripts/mash.py"
-
-
-rule combine_mash_summary:
-    input:
-        summary_reports=expand(
-            ISOLATE_FP / "mash" / "{sample}" / "{sample}_summary.tsv", sample=Samples
-        ),
-    output:
-        mash_report=ISOLATE_FP / "reports" / "mash.report",
-    shell:
-        """
-        echo -e "SampleID\\tMash_Contamination\\tContaminated_Spp" > {output.mash_report}
-        cat {input.summary_reports} >> {output.mash_report}
-        """
-
-
 # Typing
 rule sga_mlst:
     input:
@@ -292,37 +197,6 @@ rule sga_mlst:
             touch {output.mlst}
         fi
         """
-
-
-rule mlst_parse:
-    input:
-        reports=ISOLATE_FP / "mlst" / "{sample}" / "{sample}.mlst",
-    output:
-        mlst_report=ISOLATE_FP / "mlst" / "{sample}" / "parsed_mlst.txt",
-    log:
-        LOG_FP / "sga_mlst_parse_{sample}.log",
-    benchmark:
-        BENCHMARK_FP / "sga_mlst_parse_{sample}.tsv"
-    script:
-        "scripts/mlst.py"
-
-
-rule mlst_summary:
-    input:
-        reports=expand(
-            ISOLATE_FP / "mlst" / "{sample}" / "parsed_mlst.txt", sample=Samples
-        ),
-    output:
-        amr_report=ISOLATE_FP / "reports" / "mlst.report",
-    params:
-        suffix="",
-        header=True,
-    log:
-        LOG_FP / "sga_mlst_summary.log",
-    benchmark:
-        BENCHMARK_FP / "sga_mlst_summary.tsv"
-    script:
-        "scripts/concat_files.py"
 
 
 ### Annotation
@@ -356,37 +230,6 @@ rule sga_bakta:
         """
 
 
-rule parse_bakta_report:
-    input:
-        bakta=ISOLATE_FP / "bakta" / "{sample}" / "{sample}.txt",
-    output:
-        parsed_report=ISOLATE_FP / "bakta" / "{sample}" / "parsed_summary.tsv",
-    log:
-        LOG_FP / "sga_bakta_parse_{sample}.log",
-    benchmark:
-        BENCHMARK_FP / "sga_bakta_parse_{sample}.tsv"
-    script:
-        "scripts/bakta.py"
-
-
-rule combine_bakta_summary:
-    input:
-        reports=expand(
-            ISOLATE_FP / "bakta" / "{sample}" / "parsed_summary.tsv", sample=Samples
-        ),
-    output:
-        bakta_report=ISOLATE_FP / "reports" / "bakta.report",
-    params:
-        suffix="",
-        header=True,
-    log:
-        LOG_FP / "sga_combine_bakta_summary.log",
-    benchmark:
-        BENCHMARK_FP / "sga_combine_bakta_summary.tsv"
-    script:
-        "scripts/concat_files.py"
-
-
 ### AMR Profiling
 rule sga_abritamr:
     input:
@@ -414,36 +257,20 @@ rule sga_abritamr:
     """
 
 
-rule abritamr_summary:
+rule sga_report:
     input:
-        reports=expand(
-            ISOLATE_FP / "abritamr" / "{sample}" / "amrfinder.out", sample=Samples
-        ),
+        shovill=expand(ISOLATE_FP / "shovill" / "{sample}" / "{sample}.fa", sample=Samples),
+        sylph=expand(ISOLATE_FP / "sylph" / "{sample}" / "{sample}.tsv", sample=Samples),
+        checkm=expand(ISOLATE_FP / "checkm" / "{sample}" / "quality_report.tsv", sample=Samples),
+        mlst=expand(ISOLATE_FP / "mlst" / "{sample}" / "parsed_mlst.txt", sample=Samples),
+        bakta=expand(ISOLATE_FP / "bakta" / "{sample}" / "parsed_summary.txt", sample=Samples),
+        mash=expand(ISOLATE_FP / "mash" / "{sample}" / "{sample}_summary.tsv", sample=Samples),
     output:
-        amr_report=ISOLATE_FP / "reports" / "amr.report",
-    params:
-        suffix="",
-        header=True,
+        ISOLATE_FP / "final_summary.tsv",
     log:
-        LOG_FP / "sga_abritamr_summary.log",
+        LOG_FP / "sga_report.log",
     benchmark:
-        BENCHMARK_FP / "sga_abritamr_summary.tsv"
-    script:
-        "scripts/concat_files.py"
-
-
-# Final Summary Report
-rule all_summary:
-    input:
-        reports=expand(ISOLATE_FP / "reports" / "{tool}.report", tool=TOOLS.keys()),
-    output:
-        final_report=ISOLATE_FP / "final_summary.tsv",
-    params:
-        tools=TOOLS,
-    log:
-        LOG_FP / "sga_all_summary.log",
-    benchmark:
-        BENCHMARK_FP / "sga_all_summary.tsv"
+        BENCHMARK_FP / "sga_report.tsv"
     script:
         "scripts/summarize_all.py"
 

@@ -26,23 +26,6 @@ rule all_sga_virus:
         f"{ISOLATE_FP}/reports/genomad_virus_genes.report",
 
 
-rule sga_genomad_download_db:
-    """Download Genomad database"""
-    output:
-        version=Path(Cfg["sbx_sga"]["genomad_ref"]) / "genomad_db" / "version.txt",
-    log:
-        LOG_FP / "sga_genomad_download_db.log",
-    benchmark:
-        BENCHMARK_FP / "sga_genomad_download_db.tsv"
-    conda:
-        "envs/sga_virus.yml"
-    shell:
-        """
-        GENOMAD_DB_DIR=$(dirname {output.version})
-        genomad download-database $(dirname "$GENOMAD_DB_DIR") > {log} 2>&1 || true
-        """
-
-
 rule sga_genomad_end_to_end:
     """Run Genomad end-to-end pipeline"""
     input:
