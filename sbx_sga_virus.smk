@@ -30,9 +30,7 @@ rule all_sga_virus:
             sample=Samples,
         ),
         expand(
-            ISOLATE_FP
-            / "reports"
-            / f"genomad_{out}.tsv",
+            ISOLATE_FP / "reports" / f"genomad_{out}.tsv",
             out=virus_outputs,
         ),
 
@@ -43,7 +41,14 @@ rule sga_genomad_end_to_end:
         contigs=ISOLATE_FP / "shovill" / "{sample}" / "{sample}.fa",
         db_version=Path(Cfg["sbx_sga"]["genomad_ref"]) / "genomad_db" / "version.txt",
     output:
-        expand(ISOLATE_FP / "genomad" / "{sample}" / "{sample}_summary" / "{sample}_{out}.tsv", out=virus_outputs),
+        expand(
+            ISOLATE_FP
+            / "genomad"
+            / "{sample}"
+            / "{sample}_summary"
+            / "{sample}_{out}.tsv",
+            out=virus_outputs,
+        ),
     log:
         LOG_FP / "genomad_end_to_end_{sample}.log",
     benchmark:
@@ -69,7 +74,15 @@ rule sga_genomad_end_to_end:
 
 rule sga_virus_report:
     input:
-        expand(ISOLATE_FP / "genomad" / "{sample}" / "{sample}_summary" / "{sample}_{out}.tsv", sample=Samples, out=virus_outputs),
+        expand(
+            ISOLATE_FP
+            / "genomad"
+            / "{sample}"
+            / "{sample}_summary"
+            / "{sample}_{out}.tsv",
+            sample=Samples,
+            out=virus_outputs,
+        ),
     output:
         tool_reports=expand(
             ISOLATE_FP / "reports" / f"genomad_{out}.tsv", out=virus_outputs

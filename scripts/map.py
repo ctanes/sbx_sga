@@ -75,6 +75,8 @@ def reduce_dataframe(df: pd.DataFrame, tool: str) -> pd.DataFrame:
         relevant_keys = taxonomic_assignment[tool]
     elif tool in antimicrobial:
         relevant_keys = antimicrobial[tool]
+    elif tool in virus:
+        relevant_keys = virus[tool]
     else:
         raise ValueError(f"Unknown tool: {tool}")
 

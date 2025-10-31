@@ -259,23 +259,38 @@ rule sga_abritamr:
 
 rule sga_report:
     input:
-        shovill=expand(ISOLATE_FP / "shovill" / "{sample}" / "{sample}.fa", sample=Samples),
+        shovill=expand(
+            ISOLATE_FP / "shovill" / "{sample}" / "{sample}.fa", sample=Samples
+        ),
         sylph=expand(ISOLATE_FP / "sylph" / "{sample}" / "{sample}.tsv", sample=Samples),
-        checkm=expand(ISOLATE_FP / "checkm" / "{sample}" / "quality_report.tsv", sample=Samples),
-        mlst=expand(ISOLATE_FP / "mlst" / "{sample}" / "parsed_mlst.txt", sample=Samples),
-        bakta=expand(ISOLATE_FP / "bakta" / "{sample}" / "parsed_summary.txt", sample=Samples),
-        mash=expand(ISOLATE_FP / "mash" / "{sample}" / "{sample}_summary.tsv", sample=Samples),
-        abritamr=expand(ISOLATE_FP / "abritamr" / "{sample}" / "amrfinder.out", sample=Samples),
+        checkm=expand(
+            ISOLATE_FP / "checkm" / "{sample}" / "quality_report.tsv", sample=Samples
+        ),
+        mlst=expand(
+            ISOLATE_FP / "mlst" / "{sample}" / "parsed_mlst.txt", sample=Samples
+        ),
+        bakta=expand(
+            ISOLATE_FP / "bakta" / "{sample}" / "parsed_summary.txt", sample=Samples
+        ),
+        mash=expand(
+            ISOLATE_FP / "mash" / "{sample}" / "{sample}_summary.tsv", sample=Samples
+        ),
+        abritamr=expand(
+            ISOLATE_FP / "abritamr" / "{sample}" / "amrfinder.out", sample=Samples
+        ),
     output:
-        tool_reports=expand(ISOLATE_FP / "reports" / "{tool}.tsv", tool=[
-            "shovill",
-            "sylph",
-            "checkm",
-            "mlst",
-            "bakta",
-            "mash",
-            "abritamr",
-        ]),
+        tool_reports=expand(
+            ISOLATE_FP / "reports" / "{tool}.tsv",
+            tool=[
+                "shovill",
+                "sylph",
+                "checkm",
+                "mlst",
+                "bakta",
+                "mash",
+                "abritamr",
+            ],
+        ),
         assembly_qcs=ISOLATE_FP / "assembly_qcs.tsv",
         taxonomic_assignments=ISOLATE_FP / "taxonomic_assignments.tsv",
         antimicrobials=ISOLATE_FP / "antimicrobials.tsv",
