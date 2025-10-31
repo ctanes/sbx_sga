@@ -1,15 +1,25 @@
 import pandas as pd
 import traceback
 from pathlib import Path
-from .tools import (
-    BaktaOutput,
-    CheckMOutput,
-    MashOutput,
-    MLSTOutput,
-    ShovillOutput,
-    SylphOutput,
-    ToolOutput,
+from .map import antimicrobial, assembly_qc, reduce_dataframe, taxonomic_assignment
+from .parse import (
+    parse_all_outputs,
+    parse_tsv,
+    parse_bakta_txt,
+    parse_mash_winning_sorted_tab,
+    parse_fasta,
 )
+
+
+parsers = {
+    "abritamr": parse_tsv,
+    "bakta": parse_bakta_txt,
+    "checkm": parse_tsv,
+    "mash": parse_mash_winning_sorted_tab,
+    "mlst": parse_tsv,
+    "shovill": parse_fasta,
+    "sylph": parse_tsv,
+}
 
 
 if "snakemake" in globals():
@@ -18,38 +28,70 @@ if "snakemake" in globals():
         try:
             log.write("Starting summary script\n")
 
-            reports: list[tuple[Path, type[ToolOutput]]] = [
-                *[(Path(i), BaktaOutput) for i in snakemake.input.bakta],  # type: ignore
-                *[(Path(i), CheckMOutput) for i in snakemake.input.checkm],  # type: ignore
-                *[(Path(i), MashOutput) for i in snakemake.input.mash],  # type: ignore
-                *[(Path(i), MLSTOutput) for i in snakemake.input.mlst],  # type: ignore
-                *[(Path(i), ShovillOutput) for i in snakemake.input.shovill],  # type: ignore
-                *[(Path(i), SylphOutput) for i in snakemake.input.sylph],  # type: ignore
-            ]
-            samples = {fp.parent.name for fp, _ in reports}
-            tool_outputs_per_sample: dict[str, list[ToolOutput]] = {}
-            for sample in samples:
-                sample_tool_outputs = []
-                for fp, tool_cls in reports:
-                    if fp.parent.name != sample:
-                        continue
-                    output = tool_cls.from_report(fp, log.write)
-                    sample_tool_outputs.append(output)
-                tool_outputs_per_sample[sample] = sample_tool_outputs
+            outputs: dict[str, list[Path]] = {
+                "abritamr": [Path(fp) for fp in snakemake.input.abritamr],  # type: ignore
+                "bakta": [Path(fp) for fp in snakemake.input.bakta],  # type: ignore
+                "checkm": [Path(fp) for fp in snakemake.input.checkm],  # type: ignore
+                "mash": [Path(fp) for fp in snakemake.input.mash],  # type: ignore
+                "mlst": [Path(fp) for fp in snakemake.input.mlst],  # type: ignore
+                "shovill": [Path(fp) for fp in snakemake.input.shovill],  # type: ignore
+                "sylph": [Path(fp) for fp in snakemake.input.sylph],  # type: ignore
+            }
 
-            final_summary: list[dict[str, str]] = []
-            for sample, tool_outputs in tool_outputs_per_sample.items():
-                entry = {"SampleID": sample}
-                for to in tool_outputs:
-                    for key in to.KEYS:
-                        entry[key] = to.d.get(key, "NA")
-                final_summary.append(entry)
+            tool_reports = {Path(fp).stem: Path(fp) for fp in snakemake.output.tool_reports}  # type: ignore
 
-            out_fp = snakemake.output[0]  # type: ignore
-            df = pd.DataFrame(final_summary)
-            df = df.sort_values("SampleID")
-            df.to_csv(out_fp, sep="\t", index=False)
-            log.write(f"Wrote final summary to {out_fp}\n")
+            assembly_qcs = snakemake.output.assembly_qcs  # type: ignore
+            taxonomic_assignments = snakemake.output.taxonomic_assignments  # type: ignore
+            antimicrobials = snakemake.output.antimicrobials  # type: ignore
+
+            # Parse outputs
+            log.write("Parsing tool outputs\n")
+            parsed_outputs = parse_all_outputs(outputs, parsers)
+
+            # Write individual tool reports
+            log.write("Writing individual tool reports\n")
+            if set(tool_reports.keys()) != set(parsed_outputs.keys()):
+                log.write(
+                    f"Warning: tool reports keys {list(tool_reports.keys())} do not match parsed outputs keys {list(parsed_outputs.keys())}\n"
+                )
+            for tool, df in parsed_outputs.items():
+                df.to_csv(tool_reports[tool], sep="\t", index=False)
+
+            # Produce final summaries
+            log.write("Producing final summaries\n")
+            assembly_qc_df = pd.merge(
+                *[
+                    reduce_dataframe(df, tool)
+                    for tool, df in parsed_outputs.items()
+                    if tool in assembly_qc
+                ],
+                on="SampleID",
+                how="outer",
+            )
+            assembly_qc_df.to_csv(assembly_qcs, sep="\t", index=False)
+
+            taxonomic_assignment_df = pd.merge(
+                *[
+                    reduce_dataframe(df, tool)
+                    for tool, df in parsed_outputs.items()
+                    if tool in taxonomic_assignment
+                ],
+                on="SampleID",
+                how="outer",
+            )
+            taxonomic_assignment_df.to_csv(taxonomic_assignments, sep="\t", index=False)
+
+            antimicrobial_df = pd.merge(
+                *[
+                    reduce_dataframe(df, tool)
+                    for tool, df in parsed_outputs.items()
+                    if tool in antimicrobial
+                ],
+                on="SampleID",
+                how="outer",
+            )
+            antimicrobial_df.to_csv(antimicrobials, sep="\t", index=False)
+            log.write("Finished writing final summaries\n")
         except Exception as error:
             log.write(f"Encountered error: {error}")
             log.write(traceback.format_exc())

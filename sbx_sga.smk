@@ -265,21 +265,23 @@ rule sga_report:
         mlst=expand(ISOLATE_FP / "mlst" / "{sample}" / "parsed_mlst.txt", sample=Samples),
         bakta=expand(ISOLATE_FP / "bakta" / "{sample}" / "parsed_summary.txt", sample=Samples),
         mash=expand(ISOLATE_FP / "mash" / "{sample}" / "{sample}_summary.tsv", sample=Samples),
+        abritamr=expand(ISOLATE_FP / "abritamr" / "{sample}" / "amrfinder.out", sample=Samples),
     output:
-        ISOLATE_FP / "final_summary.tsv",
+        tool_reports=expand(ISOLATE_FP / "reports" / "{tool}.tsv", tool=[
+            "shovill",
+            "sylph",
+            "checkm",
+            "mlst",
+            "bakta",
+            "mash",
+            "abritamr",
+        ]),
+        assembly_qcs=ISOLATE_FP / "assembly_qcs.tsv",
+        taxonomic_assignments=ISOLATE_FP / "taxonomic_assignments.tsv",
+        antimicrobials=ISOLATE_FP / "antimicrobials.tsv",
     log:
         LOG_FP / "sga_report.log",
     benchmark:
         BENCHMARK_FP / "sga_report.tsv"
     script:
         "scripts/summarize_all.py"
-
-
-rule test_sga:
-    input:
-        f"{ISOLATE_FP}/reports/shovill.report",
-        f"{ISOLATE_FP}/reports/mlst.report",
-        f"{ISOLATE_FP}/reports/checkm.report",
-        f"{ISOLATE_FP}/reports/amr.report",
-        #f"{ISOLATE_FP}/reports/bakta.report", # Missing test database
-        f"{ISOLATE_FP}/reports/mash.report",
