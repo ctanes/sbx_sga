@@ -1,4 +1,5 @@
 import pandas as pd
+import re
 from pathlib import Path
 from typing import Callable
 
@@ -26,9 +27,61 @@ def parse_bakta_txt(fp: Path) -> pd.DataFrame:
     return df
 
 
-def parse_mash_winning_sorted_tab(fp: Path) -> pd.DataFrame:
+def _extract_species_name(classification: str) -> str:
+    matches = re.findall(r"N[A-Z]_[0-9A-Z]+\.[0-9]", classification)
+    if not matches:
+        try:
+            matches = re.findall(r"[A-Z]{2}_[0-9]+\.[0-9]", classification)
+        except Exception as exc:
+            print(
+                "WARNING: Could not extract species name from classification:",
+                classification,
+            )
+            matches = [" "]
+
+    split_char = matches[0]
+    species_split = classification.split(split_char)[1].lstrip()
+    species = " ".join(species_split.split()[:2])
+
+    return species
+
+
+def parse_mash_winning_sorted_tab(
+    fp: Path, identity: float, hits: int, median_multiplicity_factor: float
+) -> pd.DataFrame:
     df = pd.read_csv(fp, sep="\t", header=None)
-    # TODO
+
+    df.columns = [
+        "identity",
+        "hits_per_thousand",
+        "median_multiplicity",
+        "val",
+        "reference",
+        "classification",
+    ]
+
+    # Filter by identity threshold
+    df = df[df["identity"] >= identity]
+
+    # Filter by hits threshold
+    df = df[df["hits_per_thousand"].apply(lambda x: int(x.split("/")[0])) >= hits]
+
+    # Extract species names
+    df["species"] = df["classification"].apply(_extract_species_name)
+
+    # Filter out species names that include "phage"
+    df = df[~df["species"].str.contains("phage", case=False, na=False)]
+    df = df[~df["species"].str.contains("sp.", case=False, na=False)]
+
+    # Filter by median multiplicity factor
+    if df.empty:
+        return df
+    top_median_multiplicity = df["median_multiplicity"].iloc[0]
+    df = df[
+        df["median_multiplicity"]
+        >= top_median_multiplicity * median_multiplicity_factor
+    ]
+
     df.insert(0, "SampleID", _parse_sample_name(fp))
     return df
 
@@ -67,11 +120,13 @@ def parse_fasta(fp: Path) -> pd.DataFrame:
 
 
 def parse_all_outputs(
-    outputs: dict[str, list[Path]], parsers: dict[str, Callable]
+    outputs: dict[str, list[Path]],
+    parsers: dict[str, Callable],
+    parser_kwargs: dict[str, dict] = {},
 ) -> dict[str, pd.DataFrame]:
     parsed_outputs = {}
     for tool, fps in outputs.items():
-        dfs = [parsers[tool](fp) for fp in fps]
+        dfs = [parsers[tool](fp, **parser_kwargs.get(tool, {})) for fp in fps]
         combined_df = pd.concat(dfs, ignore_index=True)
         parsed_outputs[tool] = combined_df
     return parsed_outputs

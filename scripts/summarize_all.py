@@ -44,9 +44,21 @@ if "snakemake" in globals():
             taxonomic_assignments = snakemake.output.taxonomic_assignments  # type: ignore
             antimicrobials = snakemake.output.antimicrobials  # type: ignore
 
+            mash_identity = snakemake.params.mash_identity  # type: ignore
+            mash_hits = snakemake.params.mash_hits  # type: ignore
+            mash_median_multiplicity_factor = snakemake.params.mash_median_multiplicity_factor  # type: ignore
+
+            parser_kwargs = {
+                "mash": {
+                    "identity": mash_identity,
+                    "hits": mash_hits,
+                    "median_multiplicity_factor": mash_median_multiplicity_factor,
+                }
+            }
+
             # Parse outputs
             log.write("Parsing tool outputs\n")
-            parsed_outputs = parse_all_outputs(outputs, parsers)
+            parsed_outputs = parse_all_outputs(outputs, parsers, parser_kwargs)
 
             # Write individual tool reports
             log.write("Writing individual tool reports\n")
