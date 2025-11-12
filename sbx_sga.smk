@@ -33,8 +33,9 @@ localrules:
 rule all_sga:
     input:
         expand(ISOLATE_FP / "quast" / "{sample}" / "report.tsv", sample=Samples),
-        f"{ISOLATE_FP}/final_summary.tsv",
-        f"{ISOLATE_FP}/reports/amr.report",
+        assembly_qcs=ISOLATE_FP / "assembly_qcs.tsv",
+        taxonomic_assignments=ISOLATE_FP / "taxonomic_assignments.tsv",
+        antimicrobials=ISOLATE_FP / "antimicrobials.tsv",
 
 
 ## Assembly
@@ -297,10 +298,34 @@ rule sga_report:
     params:
         mash_identity=Cfg["sbx_sga"]["mash_identity"],
         mash_hits=Cfg["sbx_sga"]["mash_hits"],
-        mash_median_multiplicity_factor=Cfg["sbx_sga"]["mash_median_multiplicity_factor"],
+        mash_median_multiplicity_factor=Cfg["sbx_sga"][
+            "mash_median_multiplicity_factor"
+        ],
     log:
         LOG_FP / "sga_report.log",
     benchmark:
         BENCHMARK_FP / "sga_report.tsv"
     script:
         "scripts/summarize_all.py"
+
+
+# TODO: Should we update this to only leave behind our reports and assembled fastas?
+rule clean_sga:
+    input:
+        QC_FP / ".decontam_cleaned",
+        rules.all_sga.input,
+    output:
+        touch(ISOLATE_FP / ".sga_cleaned"),
+    params:
+        log_dir=LOG_FP,
+        benchmark_dir=BENCHMARK_FP,
+    shell:
+        """
+        isolate_dir=$(dirname {output[0]})
+        log_dir={params.log_dir}
+        benchmark_dir={params.benchmark_dir}
+
+        rm -rf $log_dir
+        rm -rf $benchmark_dir
+        find "$isolate_dir/mash" -type f -name "*.fastq" -delete
+        """
