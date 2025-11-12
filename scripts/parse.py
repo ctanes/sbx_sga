@@ -21,7 +21,7 @@ def parse_bakta_txt(fp: Path) -> pd.DataFrame:
             if len(line.split(":")) != 2:
                 continue
             key, value = line.split(":")
-            df[key.strip()] = value.strip()
+            df[key.strip()] = [value.strip()]
 
     df.insert(0, "SampleID", _parse_sample_name(fp))
     return df
@@ -49,7 +49,7 @@ def _extract_species_name(classification: str) -> str:
 def parse_mash_winning_sorted_tab(
     fp: Path, identity: float, hits: int, median_multiplicity_factor: float
 ) -> pd.DataFrame:
-    df = pd.read_csv(fp, sep="\t", header=None)
+    df: pd.DataFrame = pd.read_csv(fp, sep="\t", header=None)
 
     df.columns = [
         "identity",

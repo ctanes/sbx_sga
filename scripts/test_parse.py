@@ -72,3 +72,13 @@ def test_empty_fasta(test_reports_fp):
     assert not df.empty
     assert "SampleID" in df.columns
     assert df["Total_contigs"].iloc[0] == 0
+
+
+def test_bakta(test_reports_fp):
+    fp = test_reports_fp / "bakta/dummy.txt"
+    df = parse_bakta_txt(fp)
+
+    assert not df.empty
+    assert "SampleID" in df.columns
+    assert "CDSs" in df.columns
+    assert df["CDSs"].iloc[0] == "2492"
