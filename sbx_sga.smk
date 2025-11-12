@@ -267,9 +267,7 @@ rule sga_report:
         checkm=expand(
             ISOLATE_FP / "checkm" / "{sample}" / "quality_report.tsv", sample=Samples
         ),
-        mlst=expand(
-            ISOLATE_FP / "mlst" / "{sample}" / "{sample}" / "mlst.txt", sample=Samples
-        ),
+        mlst=expand(ISOLATE_FP / "mlst" / "{sample}" / "{sample}.mlst", sample=Samples),
         bakta=expand(ISOLATE_FP / "bakta" / "{sample}" / "{sample}.txt", sample=Samples),
         mash=expand(
             ISOLATE_FP / "mash" / "{sample}" / "{sample}_sorted_winning.tab",
