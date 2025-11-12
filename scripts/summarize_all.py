@@ -1,64 +1,110 @@
-import os
-import traceback
-from functools import reduce
-from typing import Callable
-
 import pandas as pd
+import traceback
+from pathlib import Path
+from .map import antimicrobial, assembly_qc, reduce_dataframe, taxonomic_assignment
+from .parse import (
+    parse_all_outputs,
+    parse_tsv,
+    parse_bakta_txt,
+    parse_mash_winning_sorted_tab,
+    parse_fasta,
+)
 
 
-def process_filelines(fp, columns, log: Callable[[str], None]):
-    log(f"[summarize_all] Reading file {fp} with columns {columns}")
-    df = pd.read_csv(fp, sep="\t")
-    columns.insert(0, "SampleID")
-    log(f"[summarize_all] Reordered columns for {fp}: {columns}")
-    return df[columns]
+parsers = {
+    "abritamr": parse_tsv,
+    "bakta": parse_bakta_txt,
+    "checkm": parse_tsv,
+    "mash": parse_mash_winning_sorted_tab,
+    "mlst": parse_tsv,
+    "shovill": parse_fasta,
+    "sylph": parse_tsv,
+}
 
 
-def summarize_all(input_files, output, tools, log: Callable[[str], None]):
-    log(
-        "[summarize_all] Starting summarize_all for "
-        f"{len(input_files)} files into {output}. "
-        f"Available tools: {list(tools.keys())}"
-    )
-    if not input_files:
-        # Handle empty input_files by writing an empty CSV with just the header
-        empty_df = pd.DataFrame(columns=["SampleID"])
-        empty_df.to_csv(output, index=False, sep="\t")
-        log("[summarize_all] No input files provided; wrote empty summary")
-        return
+if "snakemake" in globals():
+    log_fp = snakemake.log[0]  # type: ignore
+    with open(log_fp, "w") as log:
+        try:
+            log.write("Starting summary script\n")
 
-    master_list = []
-    for fp in input_files:
-        tool = os.path.splitext(os.path.basename(fp))[0]
-        columns = tools[tool]
-        log(f"[summarize_all] Processing tool {tool} for file {fp}")
-        df = process_filelines(fp, columns, log)
-        master_list.append(df)
+            outputs: dict[str, list[Path]] = {
+                "abritamr": [Path(fp) for fp in snakemake.input.abritamr],  # type: ignore
+                "bakta": [Path(fp) for fp in snakemake.input.bakta],  # type: ignore
+                "checkm": [Path(fp) for fp in snakemake.input.checkm],  # type: ignore
+                "mash": [Path(fp) for fp in snakemake.input.mash],  # type: ignore
+                "mlst": [Path(fp) for fp in snakemake.input.mlst],  # type: ignore
+                "shovill": [Path(fp) for fp in snakemake.input.shovill],  # type: ignore
+                "sylph": [Path(fp) for fp in snakemake.input.sylph],  # type: ignore
+            }
 
-    final_df = reduce(
-        lambda left, right: pd.merge(left, right, on="SampleID", how="outer"),
-        master_list,
-    )
-    final_df.to_csv(output, index=False, sep="\t")
-    log(f"[summarize_all] Finished writing combined summary to {output}")
+            tool_reports = {Path(fp).stem: Path(fp) for fp in snakemake.output.tool_reports}  # type: ignore
 
+            assembly_qcs = snakemake.output.assembly_qcs  # type: ignore
+            taxonomic_assignments = snakemake.output.taxonomic_assignments  # type: ignore
+            antimicrobials = snakemake.output.antimicrobials  # type: ignore
 
-with open(snakemake.log[0], "w") as log_file:
+            mash_identity = snakemake.params.mash_identity  # type: ignore
+            mash_hits = snakemake.params.mash_hits  # type: ignore
+            mash_median_multiplicity_factor = snakemake.params.mash_median_multiplicity_factor  # type: ignore
 
-    def log(message: str) -> None:
-        log_file.write(f"[summarize_all.py] {message}\n")
-        log_file.flush()
+            parser_kwargs = {
+                "mash": {
+                    "identity": mash_identity,
+                    "hits": mash_hits,
+                    "median_multiplicity_factor": mash_median_multiplicity_factor,
+                }
+            }
 
-    try:
-        log("Invoked via Snakemake")
-        summarize_all(
-            snakemake.input,
-            snakemake.output[0],
-            snakemake.params.tools,
-            log,
-        )
-        log("Completed summarize_all Snakemake execution")
-    except Exception as error:
-        log(f"Encountered error: {error}")
-        log(traceback.format_exc())
-        raise
+            # Parse outputs
+            log.write("Parsing tool outputs\n")
+            parsed_outputs = parse_all_outputs(outputs, parsers, parser_kwargs)
+
+            # Write individual tool reports
+            log.write("Writing individual tool reports\n")
+            if set(tool_reports.keys()) != set(parsed_outputs.keys()):
+                log.write(
+                    f"Warning: tool reports keys {list(tool_reports.keys())} do not match parsed outputs keys {list(parsed_outputs.keys())}\n"
+                )
+            for tool, df in parsed_outputs.items():
+                df.to_csv(tool_reports[tool], sep="\t", index=False)
+
+            # Produce final summaries
+            log.write("Producing final summaries\n")
+            assembly_qc_df = pd.merge(
+                *[
+                    reduce_dataframe(df, tool)
+                    for tool, df in parsed_outputs.items()
+                    if tool in assembly_qc
+                ],
+                on="SampleID",
+                how="outer",
+            )
+            assembly_qc_df.to_csv(assembly_qcs, sep="\t", index=False)
+
+            taxonomic_assignment_df = pd.merge(
+                *[
+                    reduce_dataframe(df, tool)
+                    for tool, df in parsed_outputs.items()
+                    if tool in taxonomic_assignment
+                ],
+                on="SampleID",
+                how="outer",
+            )
+            taxonomic_assignment_df.to_csv(taxonomic_assignments, sep="\t", index=False)
+
+            antimicrobial_df = pd.merge(
+                *[
+                    reduce_dataframe(df, tool)
+                    for tool, df in parsed_outputs.items()
+                    if tool in antimicrobial
+                ],
+                on="SampleID",
+                how="outer",
+            )
+            antimicrobial_df.to_csv(antimicrobials, sep="\t", index=False)
+            log.write("Finished writing final summaries\n")
+        except Exception as error:
+            log.write(f"Encountered error: {error}")
+            log.write(traceback.format_exc())
+            raise

@@ -16,6 +16,17 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+
+      - name: Install dependencies
+        run: |
+          pip install pytest pandas
+
+      - name: Test scripts
+        run: |
+          pytest scripts/
       
       - name: Sunbeam tests
         uses: sunbeam-labs/sbx_test_action@v1
