@@ -82,3 +82,13 @@ def test_bakta(test_reports_fp):
     assert "SampleID" in df.columns
     assert "CDSs" in df.columns
     assert df["CDSs"].iloc[0] == "2492"
+
+
+def test_parse_tsv_sylph_3151(test_reports_fp):
+    fp = test_reports_fp / "sylph/marc.bacteremia.3151.tsv"
+    df = parse_tsv(fp)
+
+    assert not df.empty
+    assert "SampleID" in df.columns
+    assert "Contig_name" in df.columns
+    assert "Actinomyces" in df["Contig_name"].iloc[0]

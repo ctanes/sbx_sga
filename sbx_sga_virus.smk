@@ -30,7 +30,7 @@ rule all_sga_virus:
             sample=Samples,
         ),
         expand(
-            ISOLATE_FP / "reports" / f"genomad_{out}.tsv",
+            ISOLATE_FP / "reports" / "genomad_{out}.tsv",
             out=virus_outputs,
         ),
 
@@ -85,7 +85,7 @@ rule sga_virus_report:
         ),
     output:
         tool_reports=expand(
-            ISOLATE_FP / "reports" / f"genomad_{out}.tsv", out=virus_outputs
+            ISOLATE_FP / "reports" / "genomad_{out}.tsv", out=virus_outputs
         ),
         virus=ISOLATE_FP / "virus.tsv",
     log:
