@@ -114,6 +114,7 @@ def run_sunbeam(setup):
             "--include",
             "sbx_sga",
             "--show-failed-logs",
+            "-n",
         ],
         capture_output=True,
         text=True,
