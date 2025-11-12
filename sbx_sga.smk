@@ -268,13 +268,12 @@ rule sga_report:
             ISOLATE_FP / "checkm" / "{sample}" / "quality_report.tsv", sample=Samples
         ),
         mlst=expand(
-            ISOLATE_FP / "mlst" / "{sample}" / "parsed_mlst.txt", sample=Samples
+            ISOLATE_FP / "mlst" / "{sample}" / "{sample}" / "mlst.txt", sample=Samples
         ),
-        bakta=expand(
-            ISOLATE_FP / "bakta" / "{sample}" / "parsed_summary.txt", sample=Samples
-        ),
+        bakta=expand(ISOLATE_FP / "bakta" / "{sample}" / "{sample}.txt", sample=Samples),
         mash=expand(
-            ISOLATE_FP / "mash" / "{sample}" / "{sample}_summary.tsv", sample=Samples
+            ISOLATE_FP / "mash" / "{sample}" / "{sample}_sorted_winning.tab",
+            sample=Samples,
         ),
         abritamr=expand(
             ISOLATE_FP / "abritamr" / "{sample}" / "amrfinder.out", sample=Samples

@@ -88,7 +88,7 @@ def parse_mash_winning_sorted_tab(
 
 def _parse_header(h: str) -> dict[str, str]:
     hl = h.split()[1:]  # gets rid of the contig name
-    header_dict = dict(item.split("=") for item in hl)
+    header_dict = dict(item.split("=", 1) for item in hl if "=" in item)
     return header_dict
 
 
