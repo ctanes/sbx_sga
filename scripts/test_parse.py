@@ -92,3 +92,13 @@ def test_parse_tsv_sylph_3151(test_reports_fp):
     assert "SampleID" in df.columns
     assert "Contig_name" in df.columns
     assert "Actinomyces" in df["Contig_name"].iloc[0]
+
+
+def test_parse_tsv_sylph_s234_ori(test_reports_fp):
+    fp = test_reports_fp / "sylph/s234.ori.lightblue.b.tsv"
+    df = parse_tsv(fp)
+
+    assert not df.empty
+    assert "SampleID" in df.columns
+    assert "Contig_name" in df.columns
+    assert df.shape[0] > 5

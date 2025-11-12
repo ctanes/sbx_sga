@@ -20,10 +20,10 @@ if "snakemake" in globals():
             log.write("Starting summary script\n")
 
             outputs: dict[str, list[Path]] = {
-                "genomad_plasmid_summary": [Path(fp) for fp in snakemake.input if "genomad_plasmid_summary" in fp],  # type: ignore
-                "genomad_virus_summary": [Path(fp) for fp in snakemake.input if "genomad_virus_summary" in fp],  # type: ignore
-                "genomad_plasmid_genes": [Path(fp) for fp in snakemake.input if "genomad_plasmid_genes" in fp],  # type: ignore
-                "genomad_virus_genes": [Path(fp) for fp in snakemake.input if "genomad_virus_genes" in fp],  # type: ignore
+                "genomad_plasmid_summary": [Path(fp) for fp in snakemake.input if "plasmid_summary" in fp],  # type: ignore
+                "genomad_virus_summary": [Path(fp) for fp in snakemake.input if "virus_summary" in fp],  # type: ignore
+                "genomad_plasmid_genes": [Path(fp) for fp in snakemake.input if "plasmid_genes" in fp],  # type: ignore
+                "genomad_virus_genes": [Path(fp) for fp in snakemake.input if "virus_genes" in fp],  # type: ignore
             }
 
             tool_reports = {Path(fp).stem: Path(fp) for fp in snakemake.output.tool_reports}  # type: ignore

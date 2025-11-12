@@ -21,18 +21,7 @@ localrules:
 
 rule all_sga_virus:
     input:
-        expand(
-            ISOLATE_FP
-            / "genomad"
-            / "{sample}"
-            / "{sample}_summary"
-            / "{sample}_virus_summary.tsv",
-            sample=Samples,
-        ),
-        expand(
-            ISOLATE_FP / "reports" / "genomad_{out}.tsv",
-            out=virus_outputs,
-        ),
+        virus=ISOLATE_FP / "virus.tsv",
 
 
 rule sga_genomad_end_to_end:
@@ -44,9 +33,9 @@ rule sga_genomad_end_to_end:
         expand(
             ISOLATE_FP
             / "genomad"
-            / "{sample}"
-            / "{sample}_summary"
-            / "{sample}_{out}.tsv",
+            / "{{sample}}"
+            / "{{sample}}_summary"
+            / "{{sample}}_{out}.tsv",
             out=virus_outputs,
         ),
     log:
@@ -74,6 +63,7 @@ rule sga_genomad_end_to_end:
 
 rule sga_virus_report:
     input:
+        # Collect all virus outputs from all samples
         expand(
             ISOLATE_FP
             / "genomad"
