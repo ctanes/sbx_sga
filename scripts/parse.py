@@ -99,6 +99,18 @@ def parse_fasta(fp: Path) -> pd.DataFrame:
             if l.startswith(">"):
                 headers.append(l.strip())
 
+    if not headers:
+        return pd.DataFrame(
+            {
+                "SampleID": [_parse_sample_name(fp)],
+                "Total_contigs": [0],
+                "Min_coverage": [0],
+                "Max_coverage": [0],
+                "Total_length": [0],
+                "Average_coverage": [0],
+            }
+        )
+
     hs = [_parse_header(h) for h in headers]
     total_contigs = len(hs)
     min_cov = min(float(h["cov"]) for h in hs)

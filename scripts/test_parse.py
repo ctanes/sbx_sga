@@ -54,3 +54,21 @@ def test_parse_mash_marc_235(test_reports_fp):
     assert all(df["identity"] >= 0.80)
     assert all(df["hits_per_thousand"].apply(lambda x: int(x.split("/")[0])) >= 10)
     assert df["species"].iloc[0] == "Serratia marcescens"
+
+
+def test_fasta(test_reports_fp):
+    fp = test_reports_fp / "shovill/dummy.fa"
+    df = parse_fasta(fp)
+
+    assert not df.empty
+    assert "SampleID" in df.columns
+    assert "Total_contigs" in df.columns
+
+
+def test_empty_fasta(test_reports_fp):
+    fp = test_reports_fp / "shovill/empty.fa"
+    df = parse_fasta(fp)
+
+    assert not df.empty
+    assert "SampleID" in df.columns
+    assert df["Total_contigs"].iloc[0] == 0
