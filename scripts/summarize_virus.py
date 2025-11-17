@@ -10,7 +10,7 @@ if "snakemake" in globals():
             log.write("Starting summary script\n")
             from .map import reduce_dataframe, virus
             from .parse import parse_all_outputs, parse_tsv
-            
+
             parsers = {
                 "genomad_plasmid_summary": parse_tsv,
                 "genomad_virus_summary": parse_tsv,

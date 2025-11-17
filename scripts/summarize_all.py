@@ -8,7 +8,12 @@ if "snakemake" in globals():
     with open(log_fp, "w") as log:
         try:
             log.write("Starting summary script\n")
-            from .map import antimicrobial, assembly_qc, reduce_dataframe, taxonomic_assignment
+            from .map import (
+                antimicrobial,
+                assembly_qc,
+                reduce_dataframe,
+                taxonomic_assignment,
+            )
             from .parse import (
                 parse_all_outputs,
                 parse_tsv,
@@ -16,7 +21,7 @@ if "snakemake" in globals():
                 parse_mash_winning_sorted_tab,
                 parse_fasta,
             )
-            
+
             parsers = {
                 "abritamr": parse_tsv,
                 "bakta": parse_bakta_txt,
