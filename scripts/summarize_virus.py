@@ -3,10 +3,30 @@ import pandas as pd
 import traceback
 from functools import reduce
 from pathlib import Path
+from typing import Iterable
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
+
+from scripts.map import reduce_dataframe, virus as virus_tools
+
+
+def summarize_virus_outputs(
+    parsed_outputs: dict[str, pd.DataFrame], virus_tool_names: Iterable[str]
+) -> pd.DataFrame:
+    dfs = [
+        reduce_dataframe(parsed_outputs[tool], tool)
+        for tool in virus_tool_names
+        if tool in parsed_outputs
+    ]
+    if not dfs:
+        return pd.DataFrame(columns=["SampleID"])
+
+    return reduce(
+        lambda left, right: pd.merge(left, right, on="SampleID", how="outer"),
+        dfs,
+    )
 
 
 if "snakemake" in globals():
@@ -14,7 +34,6 @@ if "snakemake" in globals():
     with open(log_fp, "w") as log:
         try:
             log.write("Starting summary script\n")
-            from scripts.map import reduce_dataframe, virus
             from scripts.parse import parse_all_outputs, parse_tsv
 
             parsers = {
@@ -33,7 +52,7 @@ if "snakemake" in globals():
 
             tool_reports = {Path(fp).stem: Path(fp) for fp in snakemake.output.tool_reports}  # type: ignore
 
-            virus = snakemake.output.virus  # type: ignore
+            virus_summary_output = Path(snakemake.output.virus)  # type: ignore
 
             # Parse outputs
             log.write("Parsing tool outputs\n")
@@ -50,25 +69,10 @@ if "snakemake" in globals():
 
             # Produce final summaries
             log.write("Producing final summaries\n")
-            virus_dfs = [
-                reduce_dataframe(df, tool)
-                for tool, df in parsed_outputs.items()
-                if tool in virus
-            ]
-            virus_df = (
-                reduce(
-                    lambda left, right: pd.merge(
-                        left,
-                        right,
-                        on="SampleID",
-                        how="outer",
-                    ),
-                    virus_dfs,
-                )
-                if virus_dfs
-                else pd.DataFrame(columns=["SampleID"])
+            virus_df = summarize_virus_outputs(
+                parsed_outputs, virus_tool_names=virus_tools.keys()
             )
-            virus_df.to_csv(virus, sep="\t", index=False)
+            virus_df.to_csv(virus_summary_output, sep="\t", index=False)
             log.write("Finished writing final summaries\n")
         except Exception as error:
             log.write(f"Encountered error: {error}")
