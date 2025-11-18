@@ -12,6 +12,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from scripts.map import (
     antimicrobial,
     assembly_qc,
+    contaminant,
     reduce_dataframe,
     taxonomic_assignment,
 )
@@ -21,6 +22,8 @@ from scripts.parse import (
     parse_bakta_txt,
     parse_mash_winning_sorted_tab,
     parse_fasta,
+    parse_mlst,
+    parse_sylph,
 )
 
 
@@ -45,6 +48,7 @@ def summarize_outputs(
     parsed_outputs: dict[str, pd.DataFrame],
     assembly_qc_tools: Iterable[str],
     taxonomic_assignment_tools: Iterable[str],
+    contaminant_tools: Iterable[str],
     antimicrobial_tools: Iterable[str],
 ) -> dict[str, pd.DataFrame]:
     return {
@@ -52,6 +56,7 @@ def summarize_outputs(
         "taxonomic_assignment": _merge_tool_outputs(
             parsed_outputs, taxonomic_assignment_tools
         ),
+        "contaminant": _merge_tool_outputs(parsed_outputs, contaminant_tools),
         "antimicrobial": _merge_tool_outputs(parsed_outputs, antimicrobial_tools),
     }
 
@@ -67,9 +72,9 @@ if "snakemake" in globals():
                 "bakta": parse_bakta_txt,
                 "checkm": parse_tsv,
                 "mash": parse_mash_winning_sorted_tab,
-                "mlst": parse_tsv,
+                "mlst": parse_mlst,
                 "shovill": parse_fasta,
-                "sylph": parse_tsv,
+                "sylph": parse_sylph,
             }
 
             outputs: dict[str, list[Path]] = {
@@ -86,6 +91,7 @@ if "snakemake" in globals():
 
             assembly_qcs = snakemake.output.assembly_qcs  # type: ignore
             taxonomic_assignments = snakemake.output.taxonomic_assignments  # type: ignore
+            contaminants = snakemake.output.contaminants  # type: ignore
             antimicrobials = snakemake.output.antimicrobials  # type: ignore
 
             mash_identity = snakemake.params.mash_identity  # type: ignore
@@ -119,6 +125,7 @@ if "snakemake" in globals():
                 parsed_outputs,
                 assembly_qc_tools=assembly_qc.keys(),
                 taxonomic_assignment_tools=taxonomic_assignment.keys(),
+                contaminant_tools=contaminant.keys(),
                 antimicrobial_tools=antimicrobial.keys(),
             )
 
@@ -126,6 +133,7 @@ if "snakemake" in globals():
             summary_tables["taxonomic_assignment"].to_csv(
                 taxonomic_assignments, sep="\t", index=False
             )
+            summary_tables["contaminant"].to_csv(contaminants, sep="\t", index=False)
             summary_tables["antimicrobial"].to_csv(
                 antimicrobials, sep="\t", index=False
             )

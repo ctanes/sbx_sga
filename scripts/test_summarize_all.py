@@ -1,6 +1,6 @@
 import pandas as pd
 
-from scripts.map import antimicrobial, assembly_qc, taxonomic_assignment
+from scripts.map import antimicrobial, assembly_qc, contaminant, taxonomic_assignment
 from scripts.summarize_all import summarize_outputs
 
 
@@ -41,13 +41,13 @@ def test_summarize_outputs_merges_categories():
             [
                 {
                     "SampleID": "S1",
-                    "Mash_Contamination": 0.0,
-                    "Contaminated_Spp": "None",
+                    "hits_per_thousand": "911/1000",
+                    "species": "",
                 },
                 {
                     "SampleID": "S3",
-                    "Mash_Contamination": 0.2,
-                    "Contaminated_Spp": "Bug",
+                    "hits_per_thousand": "110/1000",
+                    "species": "Bug",
                 },
             ]
         ),
@@ -55,10 +55,26 @@ def test_summarize_outputs_merges_categories():
             [
                 {
                     "SampleID": "S1",
-                    "Schema": "schema1",
-                    "ST": "1",
-                    "Alleles": "1,2,3",
-                }
+                    "classification": "schema1_1 10",
+                    "allele_assignment": "geneA(1) geneB(2)",
+                },
+                {
+                    "SampleID": "S3",
+                    "classification": "schema2_2 20",
+                    "allele_assignment": "geneC(3) geneD(4)",
+                },
+            ]
+        ),
+        "sylph": pd.DataFrame(
+            [
+                {
+                    "SampleID": "S2",
+                    "Contig_name": "schema_st_15",
+                },
+                {
+                    "SampleID": "S3",
+                    "Contig_name": "schema_st_25",
+                },
             ]
         ),
         "abritamr": pd.DataFrame(
@@ -78,6 +94,7 @@ def test_summarize_outputs_merges_categories():
         parsed_outputs,
         assembly_qc_tools=assembly_qc.keys(),
         taxonomic_assignment_tools=taxonomic_assignment.keys(),
+        contaminant_tools=contaminant.keys(),
         antimicrobial_tools=antimicrobial.keys(),
     )
 
@@ -108,6 +125,7 @@ def test_summarize_outputs_handles_missing_tools():
         parsed_outputs={},
         assembly_qc_tools=assembly_qc.keys(),
         taxonomic_assignment_tools=taxonomic_assignment.keys(),
+        contaminant_tools=contaminant.keys(),
         antimicrobial_tools=antimicrobial.keys(),
     )
 

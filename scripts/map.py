@@ -21,29 +21,30 @@ assembly_qc = {
 }
 
 taxonomic_assignment = {
-    "mash": {
-        "Mash_Contamination": "mash_contamination",
-        "species": "mash_contaminated_spp",
-    },
     "mlst": {
-        "Schema": "st_schema",
-        "ST": "st",
-        "Alleles": "allele_assignment",
+        "classification": "classification",
+        "allele_assignment": "comment",
     },
     "sylph": {
-        "Contig_name": "taxonomic_classification",
-        "Taxonomic_abundance": "taxonomic_abundance",
+        "Contig_name": "classification",
     },
+}
+
+contaminant = {
+    "mash": {
+        "hits_per_thousand": "confidence",
+        "species": "classification",
+    }
 }
 
 antimicrobial = {
     "abritamr": {
         "Contig id": "contig_id",
         "Gene symbol": "gene_symbol",
-        # TODO: what maps to gene_name?
+        "Sequence name": "gene_name",
         "Accession of closest sequence": "accession",
         "Element type": "element_type",
-        # TODO: what maps to resistance_product?
+        "Subclass": "resistance_product",
     }
 }
 
@@ -73,6 +74,8 @@ def reduce_dataframe(df: pd.DataFrame, tool: str) -> pd.DataFrame:
         relevant_keys = assembly_qc[tool]
     elif tool in taxonomic_assignment:
         relevant_keys = taxonomic_assignment[tool]
+    elif tool in contaminant:
+        relevant_keys = contaminant[tool]
     elif tool in antimicrobial:
         relevant_keys = antimicrobial[tool]
     elif tool in virus:

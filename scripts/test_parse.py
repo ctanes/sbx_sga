@@ -6,6 +6,8 @@ from .parse import (
     parse_bakta_txt,
     parse_mash_winning_sorted_tab,
     parse_fasta,
+    parse_mlst,
+    parse_sylph,
 )
 
 
@@ -27,6 +29,45 @@ def sample_report_fp(tmp_path, test_reports_fp):
     return _factory
 
 
+### AbritAMR ###
+def test_amr(sample_report_fp):
+    sample_name = "dummy"
+    fp = sample_report_fp("abritamr", sample_name, "amrfinder.out")
+    df = parse_tsv(fp)
+
+    assert not df.empty
+    assert "SampleID" in df.columns
+    assert "Contig id" in df.columns
+    assert "Gene symbol" in df.columns
+    assert "Subclass" in df.columns
+
+
+### Bakta ###
+def test_bakta(sample_report_fp):
+    sample_name = "marc.ast.1076"
+    fp = sample_report_fp("bakta", sample_name, "marc.ast.1076.txt")
+    df = parse_bakta_txt(fp)
+
+    assert not df.empty
+    assert "SampleID" in df.columns
+    assert "CDSs" in df.columns
+    assert df["SampleID"].unique().tolist() == [sample_name]
+    assert df["CDSs"].iloc[0] == "4462"
+
+
+### CheckM ###
+def test_checkm(sample_report_fp):
+    sample_name = "dummy"
+    fp = sample_report_fp("checkm", sample_name, "quality_report.tsv")
+    df = parse_tsv(fp)
+
+    assert not df.empty
+    assert "SampleID" in df.columns
+    assert "Completeness" in df.columns
+    assert "Contamination" in df.columns
+
+
+### Mash ###
 def test_parse_mash_marc_3111(sample_report_fp):
     sample_name = "marc.bacteremia.3111"
     fp = sample_report_fp(
@@ -88,9 +129,28 @@ def test_parse_mash_marc_235(sample_report_fp):
     assert df["species"].iloc[0] == "Serratia marcescens"
 
 
+### MLST ###
+def test_mlst_1076(sample_report_fp):
+    sample_name = "marc.ast.1076"
+    fp = sample_report_fp("mlst", sample_name, "marc.ast.1076.mlst")
+    df = parse_mlst(fp)
+
+    assert not df.empty
+    assert "SampleID" in df.columns
+    assert "classification" in df.columns
+    assert "allele_assignment" in df.columns
+    assert df["SampleID"].unique().tolist() == [sample_name]
+    assert df["classification"].iloc[0] == "ecoli_achtman_4 58"
+    assert (
+        df["allele_assignment"].iloc[0]
+        == "adk(6) fumC(4) gyrB(4) icd(16) mdh(24) purA(8) recA(14)"
+    )
+
+
+### Shovill ###
 def test_fasta(sample_report_fp):
-    sample_name = "dummy_sample"
-    fp = sample_report_fp("shovill", sample_name, "dummy.fa")
+    sample_name = "marc.ast.1076"
+    fp = sample_report_fp("shovill", sample_name, "marc.ast.1076.fa")
     df = parse_fasta(fp)
 
     assert not df.empty
@@ -100,7 +160,7 @@ def test_fasta(sample_report_fp):
 
 
 def test_empty_fasta(sample_report_fp):
-    sample_name = "empty_sample"
+    sample_name = "empty"
     fp = sample_report_fp("shovill", sample_name, "empty.fa")
     df = parse_fasta(fp)
 
@@ -110,18 +170,7 @@ def test_empty_fasta(sample_report_fp):
     assert df["Total_contigs"].iloc[0] == 0
 
 
-def test_bakta(sample_report_fp):
-    sample_name = "dummy_bakta"
-    fp = sample_report_fp("bakta", sample_name, "dummy.txt")
-    df = parse_bakta_txt(fp)
-
-    assert not df.empty
-    assert "SampleID" in df.columns
-    assert "CDSs" in df.columns
-    assert df["SampleID"].unique().tolist() == [sample_name]
-    assert df["CDSs"].iloc[0] == "2492"
-
-
+### Sylph ###
 def test_parse_tsv_sylph_3151(sample_report_fp):
     sample_name = "marc.bacteremia.3151"
     fp = sample_report_fp("sylph", sample_name, "marc.bacteremia.3151.tsv")
