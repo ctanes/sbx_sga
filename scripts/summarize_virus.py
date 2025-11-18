@@ -1,6 +1,11 @@
+import sys
 import pandas as pd
 import traceback
 from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 
 if "snakemake" in globals():
@@ -8,8 +13,8 @@ if "snakemake" in globals():
     with open(log_fp, "w") as log:
         try:
             log.write("Starting summary script\n")
-            from .map import reduce_dataframe, virus
-            from .parse import parse_all_outputs, parse_tsv
+            from scripts.map import reduce_dataframe, virus
+            from scripts.parse import parse_all_outputs, parse_tsv
 
             parsers = {
                 "genomad_plasmid_summary": parse_tsv,
