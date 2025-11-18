@@ -23,7 +23,7 @@ assembly_qc = {
 taxonomic_assignment = {
     "mash": {
         "Mash_Contamination": "mash_contamination",
-        "Contaminated_Spp": "mash_contaminated_spp",
+        "species": "mash_contaminated_spp",
     },
     "mlst": {
         "Schema": "st_schema",
