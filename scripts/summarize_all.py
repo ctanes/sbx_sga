@@ -3,10 +3,52 @@ import pandas as pd
 import traceback
 from functools import reduce
 from pathlib import Path
+from typing import Iterable
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
+
+from scripts.map import antimicrobial, assembly_qc, reduce_dataframe, taxonomic_assignment
+from scripts.parse import (
+    parse_all_outputs,
+    parse_tsv,
+    parse_bakta_txt,
+    parse_mash_winning_sorted_tab,
+    parse_fasta,
+)
+
+
+def _merge_tool_outputs(
+    parsed_outputs: dict[str, pd.DataFrame], tools: Iterable[str]
+) -> pd.DataFrame:
+    dfs = [
+        reduce_dataframe(parsed_outputs[tool], tool)
+        for tool in tools
+        if tool in parsed_outputs
+    ]
+    if not dfs:
+        return pd.DataFrame(columns=["SampleID"])
+
+    return reduce(
+        lambda left, right: pd.merge(left, right, on="SampleID", how="outer"),
+        dfs,
+    )
+
+
+def summarize_outputs(
+    parsed_outputs: dict[str, pd.DataFrame],
+    assembly_qc_tools: Iterable[str],
+    taxonomic_assignment_tools: Iterable[str],
+    antimicrobial_tools: Iterable[str],
+) -> dict[str, pd.DataFrame]:
+    return {
+        "assembly_qc": _merge_tool_outputs(parsed_outputs, assembly_qc_tools),
+        "taxonomic_assignment": _merge_tool_outputs(
+            parsed_outputs, taxonomic_assignment_tools
+        ),
+        "antimicrobial": _merge_tool_outputs(parsed_outputs, antimicrobial_tools),
+    }
 
 
 if "snakemake" in globals():
@@ -14,19 +56,6 @@ if "snakemake" in globals():
     with open(log_fp, "w") as log:
         try:
             log.write("Starting summary script\n")
-            from scripts.map import (
-                antimicrobial,
-                assembly_qc,
-                reduce_dataframe,
-                taxonomic_assignment,
-            )
-            from scripts.parse import (
-                parse_all_outputs,
-                parse_tsv,
-                parse_bakta_txt,
-                parse_mash_winning_sorted_tab,
-                parse_fasta,
-            )
 
             parsers = {
                 "abritamr": parse_tsv,
@@ -81,65 +110,20 @@ if "snakemake" in globals():
 
             # Produce final summaries
             log.write("Producing final summaries\n")
-            assembly_qc_dfs = [
-                reduce_dataframe(df, tool)
-                for tool, df in parsed_outputs.items()
-                if tool in assembly_qc
-            ]
-            assembly_qc_df = (
-                reduce(
-                    lambda left, right: pd.merge(
-                        left,
-                        right,
-                        on="SampleID",
-                        how="outer",
-                    ),
-                    assembly_qc_dfs,
-                )
-                if assembly_qc_dfs
-                else pd.DataFrame(columns=["SampleID"])
+            summary_tables = summarize_outputs(
+                parsed_outputs,
+                assembly_qc_tools=assembly_qc.keys(),
+                taxonomic_assignment_tools=taxonomic_assignment.keys(),
+                antimicrobial_tools=antimicrobial.keys(),
             )
-            assembly_qc_df.to_csv(assembly_qcs, sep="\t", index=False)
 
-            taxonomic_assignment_dfs = [
-                reduce_dataframe(df, tool)
-                for tool, df in parsed_outputs.items()
-                if tool in taxonomic_assignment
-            ]
-            taxonomic_assignment_df = (
-                reduce(
-                    lambda left, right: pd.merge(
-                        left,
-                        right,
-                        on="SampleID",
-                        how="outer",
-                    ),
-                    taxonomic_assignment_dfs,
-                )
-                if taxonomic_assignment_dfs
-                else pd.DataFrame(columns=["SampleID"])
+            summary_tables["assembly_qc"].to_csv(assembly_qcs, sep="\t", index=False)
+            summary_tables["taxonomic_assignment"].to_csv(
+                taxonomic_assignments, sep="\t", index=False
             )
-            taxonomic_assignment_df.to_csv(taxonomic_assignments, sep="\t", index=False)
-
-            antimicrobial_dfs = [
-                reduce_dataframe(df, tool)
-                for tool, df in parsed_outputs.items()
-                if tool in antimicrobial
-            ]
-            antimicrobial_df = (
-                reduce(
-                    lambda left, right: pd.merge(
-                        left,
-                        right,
-                        on="SampleID",
-                        how="outer",
-                    ),
-                    antimicrobial_dfs,
-                )
-                if antimicrobial_dfs
-                else pd.DataFrame(columns=["SampleID"])
+            summary_tables["antimicrobial"].to_csv(
+                antimicrobials, sep="\t", index=False
             )
-            antimicrobial_df.to_csv(antimicrobials, sep="\t", index=False)
             log.write("Finished writing final summaries\n")
         except Exception as error:
             log.write(f"Encountered error: {error}")
