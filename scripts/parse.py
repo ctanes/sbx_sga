@@ -5,7 +5,7 @@ from typing import Callable
 
 
 def _parse_sample_name(fp: Path) -> str:
-    return fp.parent.parent.name
+    return fp.parent.name
 
 
 def parse_tsv(fp: Path) -> pd.DataFrame:
