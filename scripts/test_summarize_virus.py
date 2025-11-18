@@ -29,9 +29,11 @@ def test_summarize_virus_outputs_merges_tools():
         ),
     }
 
-    summary_df = summarize_virus_outputs(
-        parsed_outputs, virus_tool_names=virus_tools.keys()
-    ).set_index("SampleID").sort_index()
+    summary_df = (
+        summarize_virus_outputs(parsed_outputs, virus_tool_names=virus_tools.keys())
+        .set_index("SampleID")
+        .sort_index()
+    )
 
     assert set(summary_df.index) == {"S1", "S2"}
     assert summary_df.loc["S1", "contig_id_x"] == "plasmid_contig_1"
