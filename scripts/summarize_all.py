@@ -1,6 +1,7 @@
 import sys
 import pandas as pd
 import traceback
+from functools import reduce
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -80,36 +81,63 @@ if "snakemake" in globals():
 
             # Produce final summaries
             log.write("Producing final summaries\n")
-            assembly_qc_df = pd.merge(
-                *[
-                    reduce_dataframe(df, tool)
-                    for tool, df in parsed_outputs.items()
-                    if tool in assembly_qc
-                ],
-                on="SampleID",
-                how="outer",
+            assembly_qc_dfs = [
+                reduce_dataframe(df, tool)
+                for tool, df in parsed_outputs.items()
+                if tool in assembly_qc
+            ]
+            assembly_qc_df = (
+                reduce(
+                    lambda left, right: pd.merge(
+                        left,
+                        right,
+                        on="SampleID",
+                        how="outer",
+                    ),
+                    assembly_qc_dfs,
+                )
+                if assembly_qc_dfs
+                else pd.DataFrame(columns=["SampleID"])
             )
             assembly_qc_df.to_csv(assembly_qcs, sep="\t", index=False)
 
-            taxonomic_assignment_df = pd.merge(
-                *[
-                    reduce_dataframe(df, tool)
-                    for tool, df in parsed_outputs.items()
-                    if tool in taxonomic_assignment
-                ],
-                on="SampleID",
-                how="outer",
+            taxonomic_assignment_dfs = [
+                reduce_dataframe(df, tool)
+                for tool, df in parsed_outputs.items()
+                if tool in taxonomic_assignment
+            ]
+            taxonomic_assignment_df = (
+                reduce(
+                    lambda left, right: pd.merge(
+                        left,
+                        right,
+                        on="SampleID",
+                        how="outer",
+                    ),
+                    taxonomic_assignment_dfs,
+                )
+                if taxonomic_assignment_dfs
+                else pd.DataFrame(columns=["SampleID"])
             )
             taxonomic_assignment_df.to_csv(taxonomic_assignments, sep="\t", index=False)
 
-            antimicrobial_df = pd.merge(
-                *[
-                    reduce_dataframe(df, tool)
-                    for tool, df in parsed_outputs.items()
-                    if tool in antimicrobial
-                ],
-                on="SampleID",
-                how="outer",
+            antimicrobial_dfs = [
+                reduce_dataframe(df, tool)
+                for tool, df in parsed_outputs.items()
+                if tool in antimicrobial
+            ]
+            antimicrobial_df = (
+                reduce(
+                    lambda left, right: pd.merge(
+                        left,
+                        right,
+                        on="SampleID",
+                        how="outer",
+                    ),
+                    antimicrobial_dfs,
+                )
+                if antimicrobial_dfs
+                else pd.DataFrame(columns=["SampleID"])
             )
             antimicrobial_df.to_csv(antimicrobials, sep="\t", index=False)
             log.write("Finished writing final summaries\n")

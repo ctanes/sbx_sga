@@ -1,6 +1,7 @@
 import sys
 import pandas as pd
 import traceback
+from functools import reduce
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -49,14 +50,23 @@ if "snakemake" in globals():
 
             # Produce final summaries
             log.write("Producing final summaries\n")
-            virus_df = pd.merge(
-                *[
-                    reduce_dataframe(df, tool)
-                    for tool, df in parsed_outputs.items()
-                    if tool in virus
-                ],
-                on="SampleID",
-                how="outer",
+            virus_dfs = [
+                reduce_dataframe(df, tool)
+                for tool, df in parsed_outputs.items()
+                if tool in virus
+            ]
+            virus_df = (
+                reduce(
+                    lambda left, right: pd.merge(
+                        left,
+                        right,
+                        on="SampleID",
+                        how="outer",
+                    ),
+                    virus_dfs,
+                )
+                if virus_dfs
+                else pd.DataFrame(columns=["SampleID"])
             )
             virus_df.to_csv(virus, sep="\t", index=False)
             log.write("Finished writing final summaries\n")
