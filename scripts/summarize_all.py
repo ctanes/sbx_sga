@@ -1,59 +1,10 @@
 import sys
-import pandas as pd
 import traceback
 from pathlib import Path
-from typing import Iterable
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
-
-from scripts.map import (
-    antimicrobial,
-    assembly_qc,
-    contaminant,
-    reduce_dataframe,
-    taxonomic_assignment,
-)
-from scripts.merge_utils import merge_dataframes_on_sampleid
-from scripts.parse import (
-    parse_all_outputs,
-    parse_tsv,
-    parse_bakta_txt,
-    parse_mash_winning_sorted_tab,
-    parse_fasta,
-    parse_mlst,
-    parse_sylph,
-)
-
-
-def _merge_tool_outputs(
-    parsed_outputs: dict[str, pd.DataFrame], tools: Iterable[str]
-) -> pd.DataFrame:
-    dfs = [
-        reduce_dataframe(parsed_outputs[tool], tool)
-        for tool in tools
-        if tool in parsed_outputs
-    ]
-
-    return merge_dataframes_on_sampleid(dfs)
-
-
-def summarize_outputs(
-    parsed_outputs: dict[str, pd.DataFrame],
-    assembly_qc_tools: Iterable[str],
-    taxonomic_assignment_tools: Iterable[str],
-    contaminant_tools: Iterable[str],
-    antimicrobial_tools: Iterable[str],
-) -> dict[str, pd.DataFrame]:
-    return {
-        "assembly_qc": _merge_tool_outputs(parsed_outputs, assembly_qc_tools),
-        "taxonomic_assignment": _merge_tool_outputs(
-            parsed_outputs, taxonomic_assignment_tools
-        ),
-        "contaminant": _merge_tool_outputs(parsed_outputs, contaminant_tools),
-        "antimicrobial": _merge_tool_outputs(parsed_outputs, antimicrobial_tools),
-    }
 
 
 if "snakemake" in globals():
@@ -61,6 +12,20 @@ if "snakemake" in globals():
     with open(log_fp, "w") as log:
         try:
             log.write("Starting summary script\n")
+            from scripts.map import tools_to_model
+            from scripts.parse import (
+                parse_all_outputs,
+                parse_tsv,
+                parse_bakta_txt,
+                parse_mash_winning_sorted_tab,
+                parse_fasta,
+                parse_mlst,
+                parse_sylph,
+            )
+            from scripts.write import (
+                write_tool_reports,
+                write_final_summary,
+            )
 
             parsers = {
                 "abritamr": parse_tsv,
@@ -107,30 +72,22 @@ if "snakemake" in globals():
 
             # Write individual tool reports
             log.write("Writing individual tool reports\n")
-            if set(tool_reports.keys()) != set(parsed_outputs.keys()):
-                log.write(
-                    f"Warning: tool reports keys {list(tool_reports.keys())} do not match parsed outputs keys {list(parsed_outputs.keys())}\n"
-                )
-            for tool, df in parsed_outputs.items():
-                df.to_csv(tool_reports[tool], sep="\t", index=False)
+            write_tool_reports(parsed_outputs, tool_reports)
 
             # Produce final summaries
             log.write("Producing final summaries\n")
-            summary_tables = summarize_outputs(
-                parsed_outputs,
-                assembly_qc_tools=assembly_qc.keys(),
-                taxonomic_assignment_tools=taxonomic_assignment.keys(),
-                contaminant_tools=contaminant.keys(),
-                antimicrobial_tools=antimicrobial.keys(),
+            write_final_summary(
+                assembly_qcs, tools_to_model(parsed_outputs, "assembly_qc")
             )
-
-            summary_tables["assembly_qc"].to_csv(assembly_qcs, sep="\t", index=False)
-            summary_tables["taxonomic_assignment"].to_csv(
-                taxonomic_assignments, sep="\t", index=False
+            write_final_summary(
+                taxonomic_assignments,
+                tools_to_model(parsed_outputs, "taxonomic_assignment"),
             )
-            summary_tables["contaminant"].to_csv(contaminants, sep="\t", index=False)
-            summary_tables["antimicrobial"].to_csv(
-                antimicrobials, sep="\t", index=False
+            write_final_summary(
+                contaminants, tools_to_model(parsed_outputs, "contaminant")
+            )
+            write_final_summary(
+                antimicrobials, tools_to_model(parsed_outputs, "antimicrobial")
             )
             log.write("Finished writing final summaries\n")
         except Exception as error:
