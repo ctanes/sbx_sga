@@ -1,7 +1,6 @@
 import sys
 import pandas as pd
 import traceback
-from functools import reduce
 from pathlib import Path
 from typing import Iterable
 
@@ -10,6 +9,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from scripts.map import reduce_dataframe, virus as virus_tools
+from scripts.merge_utils import merge_dataframes_on_sampleid
 
 
 def summarize_virus_outputs(
@@ -20,13 +20,8 @@ def summarize_virus_outputs(
         for tool in virus_tool_names
         if tool in parsed_outputs
     ]
-    if not dfs:
-        return pd.DataFrame(columns=["SampleID"])
 
-    return reduce(
-        lambda left, right: pd.merge(left, right, on="SampleID", how="outer"),
-        dfs,
-    )
+    return merge_dataframes_on_sampleid(dfs)
 
 
 if "snakemake" in globals():

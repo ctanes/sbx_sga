@@ -132,3 +132,38 @@ def test_summarize_outputs_handles_missing_tools():
     assert summaries["assembly_qc"].columns.tolist() == ["SampleID"]
     assert summaries["taxonomic_assignment"].columns.tolist() == ["SampleID"]
     assert summaries["antimicrobial"].columns.tolist() == ["SampleID"]
+
+
+def test_summarize_outputs_coalesces_shared_columns():
+    parsed_outputs = {
+        "mlst": pd.DataFrame(
+            [
+                {
+                    "SampleID": "S1",
+                    "classification": "mlst_schema",
+                    "allele_assignment": "geneA(1)",
+                }
+            ]
+        ),
+        "sylph": pd.DataFrame(
+            [
+                {"SampleID": "S1", "Contig_name": "sylph_schema"},
+                {"SampleID": "S2", "Contig_name": "sylph_other"},
+            ]
+        ),
+    }
+
+    summaries = summarize_outputs(
+        parsed_outputs,
+        assembly_qc_tools=assembly_qc.keys(),
+        taxonomic_assignment_tools=taxonomic_assignment.keys(),
+        contaminant_tools=contaminant.keys(),
+        antimicrobial_tools=antimicrobial.keys(),
+    )
+
+    tax_df = summaries["taxonomic_assignment"].set_index("SampleID")
+
+    assert "classification" in tax_df.columns
+    assert all(not col.endswith("_dup") for col in tax_df.columns)
+    assert tax_df.loc["S1", "classification"] == "mlst_schema"
+    assert tax_df.loc["S2", "classification"] == "sylph_other"

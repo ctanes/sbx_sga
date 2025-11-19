@@ -1,7 +1,6 @@
 import sys
 import pandas as pd
 import traceback
-from functools import reduce
 from pathlib import Path
 from typing import Iterable
 
@@ -16,6 +15,7 @@ from scripts.map import (
     reduce_dataframe,
     taxonomic_assignment,
 )
+from scripts.merge_utils import merge_dataframes_on_sampleid
 from scripts.parse import (
     parse_all_outputs,
     parse_tsv,
@@ -35,13 +35,8 @@ def _merge_tool_outputs(
         for tool in tools
         if tool in parsed_outputs
     ]
-    if not dfs:
-        return pd.DataFrame(columns=["SampleID"])
 
-    return reduce(
-        lambda left, right: pd.merge(left, right, on="SampleID", how="outer"),
-        dfs,
-    )
+    return merge_dataframes_on_sampleid(dfs)
 
 
 def summarize_outputs(
