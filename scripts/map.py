@@ -55,9 +55,24 @@ def tools_to_assembly_qc(parsed_outputs: dict[str, pd.DataFrame]) -> pd.DataFram
         columns={"Completeness": "completeness", "Contamination": "contamination"}
     )
 
-    return _merge_dfs_on_sample_id(
+    df = _merge_dfs_on_sample_id(
         [df for df in [shovill_df, bakta_df, checkm_df] if not df.empty]
     )
+    return df[
+        [
+            "SampleID",
+            "contig_count",
+            "min_contig_coverage",
+            "max_contig_coverage",
+            "genome_size",
+            "avg_contig_coverage",
+            "gc_content",
+            "n50",
+            "cds",
+            "completeness",
+            "contamination",
+        ]
+    ]
 
 
 def tools_to_taxonomic_assignment(
@@ -70,6 +85,9 @@ def tools_to_taxonomic_assignment(
             "allele_assignment": "comment",
         }
     )
+    # Add tool field
+    if not mlst_df.empty:
+        mlst_df["tool"] = "mlst"
 
     sylph_df = parsed_outputs.get("sylph", pd.DataFrame())
     sylph_df = sylph_df.rename(
@@ -78,15 +96,19 @@ def tools_to_taxonomic_assignment(
         }
     )
     # Add empty comment column for sylph if it doesn't exist
-    if not sylph_df.empty and "comment" not in sylph_df.columns:
-        sylph_df["comment"] = ""
+    if not sylph_df.empty:
+        if "comment" not in sylph_df.columns:
+            sylph_df["comment"] = ""
+        sylph_df["tool"] = "sylph"
 
     # Concatenate instead of merge to allow multiple classifications per sample
     dfs_to_concat = [df for df in [mlst_df, sylph_df] if not df.empty]
     if not dfs_to_concat:
         return pd.DataFrame(columns=["SampleID"])
 
-    return pd.concat(dfs_to_concat, ignore_index=True)
+    return pd.concat(dfs_to_concat, ignore_index=True)[
+        ["SampleID", "classification", "comment", "tool"]
+    ]
 
 
 def tools_to_contaminant(parsed_outputs: dict[str, pd.DataFrame]) -> pd.DataFrame:
@@ -97,8 +119,18 @@ def tools_to_contaminant(parsed_outputs: dict[str, pd.DataFrame]) -> pd.DataFram
             "species": "classification",
         }
     )
+    # Add tool field
+    if not mash_df.empty:
+        mash_df["tool"] = "mash"
 
-    return _merge_dfs_on_sample_id([df for df in [mash_df] if not df.empty])
+    # Use concatenation approach like taxonomic assignment for consistency
+    dfs_to_concat = [df for df in [mash_df] if not df.empty]
+    if not dfs_to_concat:
+        return pd.DataFrame(columns=["SampleID"])
+
+    return pd.concat(dfs_to_concat, ignore_index=True)[
+        ["SampleID", "classification", "confidence", "tool"]
+    ]
 
 
 def tools_to_antimicrobial(parsed_outputs: dict[str, pd.DataFrame]) -> pd.DataFrame:
@@ -114,7 +146,18 @@ def tools_to_antimicrobial(parsed_outputs: dict[str, pd.DataFrame]) -> pd.DataFr
         }
     )
 
-    return _merge_dfs_on_sample_id([df for df in [abritamr_df] if not df.empty])
+    df = _merge_dfs_on_sample_id([df for df in [abritamr_df] if not df.empty])
+    return df[
+        [
+            "SampleID",
+            "contig_id",
+            "gene_symbol",
+            "gene_name",
+            "accession",
+            "element_type",
+            "resistance_product",
+        ]
+    ]
 
 
 def tools_to_model(parsed_outputs: dict[str, pd.DataFrame], model: str) -> pd.DataFrame:

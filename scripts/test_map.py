@@ -80,8 +80,10 @@ parsed_outputs = {
                 "SampleID": "S2",
                 "Contig id": "contig_1",
                 "Gene symbol": "geneA",
+                "Sequence name": "geneA_full",
                 "Accession of closest sequence": "acc1",
                 "Element type": "element",
+                "Subclass": "resistance_product",
             }
         ]
     ),
@@ -105,8 +107,40 @@ def test_tools_to_taxonomic_assignment():
     assert set(taxonomic_assignment_df["SampleID"].tolist()) == {"S1", "S2", "S3"}
     print("HERE:", taxonomic_assignment_df)
     assert all(
-        c in taxonomic_assignment_df.columns for c in ["classification", "comment"]
+        c in taxonomic_assignment_df.columns
+        for c in ["classification", "comment", "tool"]
     )
     # Get both entries for S3
     s3_entries = taxonomic_assignment_df[taxonomic_assignment_df["SampleID"] == "S3"]
     assert len(s3_entries) == 2
+
+
+def test_tools_to_contaminant():
+    contaminant_df = tools_to_model(parsed_outputs, "contaminant")
+
+    assert not contaminant_df.empty
+    assert set(contaminant_df["SampleID"].tolist()) == {"S1", "S3"}
+    assert all(
+        c in contaminant_df.columns for c in ["classification", "confidence", "tool"]
+    )
+
+
+def test_tools_to_antimicrobial():
+    antimicrobial_df = tools_to_model(parsed_outputs, "antimicrobial")
+
+    assert not antimicrobial_df.empty
+    assert set(antimicrobial_df["SampleID"].tolist()) == {"S2"}
+    print(antimicrobial_df)
+    assert all(
+        [
+            c in antimicrobial_df.columns
+            for c in [
+                "contig_id",
+                "gene_symbol",
+                "gene_name",
+                "accession",
+                "element_type",
+                "resistance_product",
+            ]
+        ]
+    )
