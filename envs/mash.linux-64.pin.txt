@@ -16,7 +16,7 @@ https://conda.anaconda.org/conda-forge/linux-64/capnproto-1.0.2-h766bdaa_3.conda
 https://conda.anaconda.org/conda-forge/linux-64/libgfortran-15.2.0-h69a702a_7.conda#8621a450add4e231f676646880703f49
 https://conda.anaconda.org/conda-forge/linux-64/libstdcxx-ng-15.2.0-h4852527_7.conda#f627678cf829bd70bccf141a19c3ad3e
 https://conda.anaconda.org/conda-forge/linux-64/libopenblas-0.3.30-pthreads_h94d23a6_4.conda#be43915efc66345cccb3c310b6ed0374
-https://conda.anaconda.org/conda-forge/linux-64/libblas-3.9.0-39_h4a7cf45_openblas.conda#eee930e4b1bea9d04bc045f9d73aadbe
-https://conda.anaconda.org/conda-forge/linux-64/libcblas-3.9.0-39_h0358290_openblas.conda#7a1e939533970ec4a60abd597a2fcdce
+https://conda.anaconda.org/conda-forge/linux-64/libblas-3.11.0-2_h4a7cf45_openblas.conda#6146bf1b7f58113d54614c6ec683c14a
+https://conda.anaconda.org/conda-forge/linux-64/libcblas-3.11.0-2_h0358290_openblas.conda#a84b2b7ed34206d14739fb8d29cd2799
 https://conda.anaconda.org/conda-forge/linux-64/gsl-2.8-hbf7d49c_1.conda#04e128d2adafe3c844cde58f103c481b
 https://conda.anaconda.org/bioconda/linux-64/mash-2.3-hb105d93_10.tar.bz2#9d22da2dbc61776f6e10cca4fae96f52
