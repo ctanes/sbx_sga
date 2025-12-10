@@ -42,6 +42,18 @@ def test_amr(sample_report_fp):
     assert "Subclass" in df.columns
 
 
+def test_parse_tsv_empty(tmp_path):
+    sample_name = "empty"
+    fp = tmp_path / "abritamr" / sample_name / "amrfinder.out"
+    fp.parent.mkdir(parents=True, exist_ok=True)
+    fp.write_text("")
+
+    df = parse_tsv(fp)
+
+    assert df.empty
+    assert list(df.columns) == ["SampleID"]
+
+
 ### Bakta ###
 def test_bakta(sample_report_fp):
     sample_name = "marc.ast.1076"
@@ -129,6 +141,20 @@ def test_parse_mash_marc_235(sample_report_fp):
     assert df["species"].iloc[0] == "Serratia marcescens"
 
 
+def test_parse_mash_empty(tmp_path):
+    sample_name = "empty"
+    fp = tmp_path / "mash" / sample_name / "sample.tab"
+    fp.parent.mkdir(parents=True, exist_ok=True)
+    fp.write_text("")
+
+    df = parse_mash_winning_sorted_tab(
+        fp, identity=0.85, hits=100, median_multiplicity_factor=0.05
+    )
+
+    assert df.empty
+    assert "SampleID" in df.columns
+
+
 ### MLST ###
 def test_mlst_1076(sample_report_fp):
     sample_name = "marc.ast.1076"
@@ -145,6 +171,18 @@ def test_mlst_1076(sample_report_fp):
         df["allele_assignment"].iloc[0]
         == "adk(6) fumC(4) gyrB(4) icd(16) mdh(24) purA(8) recA(14)"
     )
+
+
+def test_mlst_empty(tmp_path):
+    sample_name = "empty"
+    fp = tmp_path / "mlst" / sample_name / "sample.mlst"
+    fp.parent.mkdir(parents=True, exist_ok=True)
+    fp.write_text("")
+
+    df = parse_mlst(fp)
+
+    assert df.empty
+    assert list(df.columns) == ["SampleID", "classification", "allele_assignment"]
 
 
 ### Shovill ###
