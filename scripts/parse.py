@@ -25,9 +25,7 @@ def parse_mlst(fp: Path) -> pd.DataFrame:
     try:
         df = pd.read_csv(fp, sep="\t", header=None)
     except pd.errors.EmptyDataError:
-        return pd.DataFrame(
-            columns=["SampleID", "classification", "allele_assignment"]
-        )
+        return pd.DataFrame(columns=["SampleID", "classification", "allele_assignment"])
     df.insert(0, "SampleID", _parse_sample_name(fp))
 
     classification_row = df.apply(lambda row: f"{row.iloc[2]} {row.iloc[3]}", axis=1)
