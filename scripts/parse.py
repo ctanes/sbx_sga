@@ -9,7 +9,11 @@ def _parse_sample_name(fp: Path) -> str:
 
 
 def parse_tsv(fp: Path) -> pd.DataFrame:
-    df = pd.read_csv(fp, sep="\t")
+    try:
+        df = pd.read_csv(fp, sep="\t")
+    except pd.errors.EmptyDataError:
+        return pd.DataFrame(columns=["SampleID"])
+
     df.insert(0, "SampleID", _parse_sample_name(fp))
     return df
 
@@ -18,7 +22,10 @@ def parse_mlst(fp: Path) -> pd.DataFrame:
     # Take in `marc.ast.1076.fa	ecoli_achtman_4	58	adk(6)	fumC(4)	gyrB(4)	icd(16)	mdh(24)	purA(8)	recA(14)`
     # and convert to a dataframe with columns SampleID, classification (e.g. `ecoli_achtman_4 58`), and allele_assignment (e.g. `adk(6) fumC(4) ...`)
     # Note: the tsv comes without a header line
-    df = pd.read_csv(fp, sep="\t", header=None)
+    try:
+        df = pd.read_csv(fp, sep="\t", header=None)
+    except pd.errors.EmptyDataError:
+        return pd.DataFrame(columns=["SampleID", "classification", "allele_assignment"])
     df.insert(0, "SampleID", _parse_sample_name(fp))
 
     classification_row = df.apply(lambda row: f"{row.iloc[2]} {row.iloc[3]}", axis=1)
@@ -68,7 +75,21 @@ def _extract_species_name(classification: str) -> str:
 def parse_mash_winning_sorted_tab(
     fp: Path, identity: float, hits: int, median_multiplicity_factor: float
 ) -> pd.DataFrame:
-    df: pd.DataFrame = pd.read_csv(fp, sep="\t", header=None)
+    try:
+        df: pd.DataFrame = pd.read_csv(fp, sep="\t", header=None)
+    except pd.errors.EmptyDataError:
+        return pd.DataFrame(
+            columns=[
+                "SampleID",
+                "identity",
+                "hits_per_thousand",
+                "median_multiplicity",
+                "val",
+                "reference",
+                "classification",
+                "species",
+            ]
+        )
 
     df.columns = [
         "identity",
