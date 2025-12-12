@@ -159,15 +159,14 @@ def test_tools_handle_empty_inputs():
             ]
         ),
         "bakta": pd.DataFrame(columns=["SampleID", "GC", "N50", "CDSs"]),
-        "checkm": pd.DataFrame(
-            columns=["SampleID", "Completeness", "Contamination"]
-        ),
+        "checkm": pd.DataFrame(columns=["SampleID", "Completeness", "Contamination"]),
         "mash": pd.DataFrame(columns=["SampleID", "species", "hits_per_thousand"]),
-        "mlst": pd.DataFrame(columns=["SampleID", "classification", "allele_assignment"]),
+        "mlst": pd.DataFrame(
+            columns=["SampleID", "classification", "allele_assignment"]
+        ),
         "sylph": pd.DataFrame(columns=["SampleID", "Contig_name"]),
         "abritamr": pd.DataFrame(
-            columns=
-            [
+            columns=[
                 "SampleID",
                 "Contig id",
                 "Gene symbol",
