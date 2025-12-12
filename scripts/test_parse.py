@@ -54,6 +54,18 @@ def test_parse_tsv_empty(tmp_path):
     assert list(df.columns) == ["SampleID"]
 
 
+def test_parse_tsv_header_only(tmp_path):
+    sample_name = "header_only"
+    fp = tmp_path / "abritamr" / sample_name / "amrfinder.out"
+    fp.parent.mkdir(parents=True, exist_ok=True)
+    fp.write_text("ColA\tColB\n")
+
+    df = parse_tsv(fp)
+
+    assert df.empty
+    assert list(df.columns) == ["SampleID", "ColA", "ColB"]
+
+
 ### Bakta ###
 def test_bakta(sample_report_fp):
     sample_name = "marc.ast.1076"
@@ -231,3 +243,15 @@ def test_parse_tsv_sylph_s234_ori(sample_report_fp):
     assert "Contig_name" in df.columns
     assert df["SampleID"].unique().tolist() == [sample_name]
     assert df.shape[0] > 5
+
+
+def test_parse_sylph_empty(tmp_path):
+    sample_name = "empty"
+    fp = tmp_path / "sylph" / sample_name / "sample.tsv"
+    fp.parent.mkdir(parents=True, exist_ok=True)
+    fp.write_text("")
+
+    df = parse_sylph(fp)
+
+    assert df.empty
+    assert list(df.columns) == ["SampleID", "Contig_name", "species"]
