@@ -106,6 +106,20 @@ def parse_mash_winning_sorted_tab(
     # Filter by hits threshold
     df = df[df["hits_per_thousand"].apply(lambda x: int(x.split("/")[0])) >= hits]
 
+    if df.empty:
+        return pd.DataFrame(
+            columns=[
+                "SampleID",
+                "identity",
+                "hits_per_thousand",
+                "median_multiplicity",
+                "val",
+                "reference",
+                "classification",
+                "species",
+            ]
+        )
+
     # Extract species names
     df["species"] = df["classification"].apply(_extract_species_name)
 
@@ -115,7 +129,18 @@ def parse_mash_winning_sorted_tab(
 
     # Filter by median multiplicity factor
     if df.empty:
-        return df
+        return pd.DataFrame(
+            columns=[
+                "SampleID",
+                "identity",
+                "hits_per_thousand",
+                "median_multiplicity",
+                "val",
+                "reference",
+                "classification",
+                "species",
+            ]
+        )
     top_median_multiplicity = df["median_multiplicity"].iloc[0]
     df = df[
         df["median_multiplicity"]
@@ -173,6 +198,14 @@ def parse_fasta(fp: Path) -> pd.DataFrame:
 
 def parse_sylph(fp: Path) -> pd.DataFrame:
     df = parse_tsv(fp)
+
+    if "Contig_name" not in df.columns:
+        df["Contig_name"] = pd.Series(dtype=str)
+
+    if df.empty:
+        df["species"] = pd.Series(dtype=str)
+        return df[["SampleID", "Contig_name", "species"]]
+
     df["species"] = df["Contig_name"].apply(_extract_species_name)
     return df
 
