@@ -74,16 +74,21 @@ if "snakemake" in globals():
         logger.debug("Parsing tool outputs", extra={"outputs": outputs})
         parsed_outputs = parse_all_outputs(outputs, parsers, parser_kwargs)
 
-        logger.debug("Writing individual tool reports", extra={"tool_reports": tool_reports})
+        logger.debug(
+            "Writing individual tool reports", extra={"tool_reports": tool_reports}
+        )
         write_tool_reports(parsed_outputs, tool_reports)
 
         logger.debug("Producing final summaries")
         write_final_summary(assembly_qcs, tools_to_model(parsed_outputs, "assembly_qc"))
         write_final_summary(
-            taxonomic_assignments, tools_to_model(parsed_outputs, "taxonomic_assignment")
+            taxonomic_assignments,
+            tools_to_model(parsed_outputs, "taxonomic_assignment"),
         )
         write_final_summary(contaminants, tools_to_model(parsed_outputs, "contaminant"))
-        write_final_summary(antimicrobials, tools_to_model(parsed_outputs, "antimicrobial"))
+        write_final_summary(
+            antimicrobials, tools_to_model(parsed_outputs, "antimicrobial")
+        )
         logger.debug("Finished writing final summaries")
     except Exception:
         logger.exception("Encountered error during summarization")

@@ -42,7 +42,9 @@ if "snakemake" in globals():
         logger.debug("Parsing tool outputs", extra={"outputs": outputs})
         parsed_outputs = parse_all_outputs(outputs, parsers)
 
-        logger.debug("Writing individual tool reports", extra={"tool_reports": tool_reports})
+        logger.debug(
+            "Writing individual tool reports", extra={"tool_reports": tool_reports}
+        )
         for tool, df in parsed_outputs.items():
             df.to_csv(tool_reports[tool], sep="\t", index=False)
             logger.debug(

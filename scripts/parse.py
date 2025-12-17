@@ -74,7 +74,9 @@ def _extract_species_name(classification: str) -> str:
         cleaned = re.sub(r"^\[[^\]]*\]\s*", "", cleaned)
 
         accession_match = re.search(r"[A-Z_]+[0-9]+(?:\.[0-9]+)?", cleaned)
-        remainder = cleaned[accession_match.end() :].strip() if accession_match else cleaned
+        remainder = (
+            cleaned[accession_match.end() :].strip() if accession_match else cleaned
+        )
 
         tokens = remainder.split()
         if len(tokens) >= 2:
