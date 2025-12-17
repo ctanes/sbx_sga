@@ -1,7 +1,11 @@
+import logging
 import pandas as pd
 import re
 from pathlib import Path
 from typing import Callable
+
+
+logger = logging.getLogger(__name__)
 
 
 def _parse_sample_name(fp: Path) -> str:
@@ -10,11 +14,17 @@ def _parse_sample_name(fp: Path) -> str:
 
 def parse_tsv(fp: Path) -> pd.DataFrame:
     try:
+        logger.debug("Parsing TSV file", extra={"path": str(fp)})
         df = pd.read_csv(fp, sep="\t")
     except pd.errors.EmptyDataError:
+        logger.warning("TSV file empty", extra={"path": str(fp)})
         return pd.DataFrame(columns=["SampleID"])
 
     df.insert(0, "SampleID", _parse_sample_name(fp))
+    logger.debug(
+        "Parsed TSV dataframe",
+        extra={"path": str(fp), "dataframe": df.to_dict(orient="list")},
+    )
     return df
 
 
@@ -23,8 +33,10 @@ def parse_mlst(fp: Path) -> pd.DataFrame:
     # and convert to a dataframe with columns SampleID, classification (e.g. `ecoli_achtman_4 58`), and allele_assignment (e.g. `adk(6) fumC(4) ...`)
     # Note: the tsv comes without a header line
     try:
+        logger.debug("Parsing MLST file", extra={"path": str(fp)})
         df = pd.read_csv(fp, sep="\t", header=None)
     except pd.errors.EmptyDataError:
+        logger.warning("MLST file empty", extra={"path": str(fp)})
         return pd.DataFrame(columns=["SampleID", "classification", "allele_assignment"])
     df.insert(0, "SampleID", _parse_sample_name(fp))
 
@@ -37,11 +49,16 @@ def parse_mlst(fp: Path) -> pd.DataFrame:
     # Drop unused columns, everything but SampleID, classification, allele_assignment
     df = df[["SampleID", "classification", "allele_assignment"]]
 
+    logger.debug(
+        "Parsed MLST dataframe",
+        extra={"path": str(fp), "dataframe": df.to_dict(orient="list")},
+    )
     return df
 
 
 def parse_bakta_txt(fp: Path) -> pd.DataFrame:
     df = pd.DataFrame()
+    logger.debug("Parsing Bakta text file", extra={"path": str(fp)})
     with open(fp) as f:
         for line in f:
             if len(line.split(":")) != 2:
@@ -50,24 +67,39 @@ def parse_bakta_txt(fp: Path) -> pd.DataFrame:
             df[key.strip()] = [value.strip()]
 
     df.insert(0, "SampleID", _parse_sample_name(fp))
+    logger.debug(
+        "Parsed Bakta dataframe",
+        extra={"path": str(fp), "dataframe": df.to_dict(orient="list")},
+    )
     return df
 
 
 def _extract_species_name(classification: str) -> str:
-    matches = re.findall(r"N[A-Z]_[0-9A-Z]+\.[0-9]", classification)
-    if not matches:
-        try:
-            matches = re.findall(r"[A-Z]{2}_[0-9]+\.[0-9]", classification)
-        except Exception as exc:
-            print(
-                "WARNING: Could not extract species name from classification:",
-                classification,
-            )
-            matches = [" "]
+    if not classification:
+        return ""
 
-    split_char = matches[0]
-    species_split = classification.split(split_char)[1].lstrip()
-    species = " ".join(species_split.split()[:2])
+    try:
+        cleaned = classification.strip()
+        cleaned = re.sub(r"^\[[^\]]*\]\s*", "", cleaned)
+
+        accession_match = re.search(r"[A-Z_]+[0-9]+(?:\.[0-9]+)?", cleaned)
+        remainder = cleaned[accession_match.end() :].strip() if accession_match else cleaned
+
+        tokens = remainder.split()
+        if len(tokens) >= 2:
+            species_tokens = tokens[:2]
+        elif tokens:
+            species_tokens = [tokens[0]]
+        else:
+            species_tokens = []
+
+        species = " ".join(token.rstrip(",") for token in species_tokens)
+    except Exception as exc:  # pragma: no cover - defensive logging path
+        logger.error(
+            "Could not extract species name from classification",
+            extra={"classification": classification, "exception": str(exc)},
+        )
+        return ""
 
     return species
 
@@ -76,8 +108,18 @@ def parse_mash_winning_sorted_tab(
     fp: Path, identity: float, hits: int, median_multiplicity_factor: float
 ) -> pd.DataFrame:
     try:
+        logger.debug(
+            "Parsing mash winning sorted tab",
+            extra={
+                "path": str(fp),
+                "identity_threshold": identity,
+                "hits_threshold": hits,
+                "median_multiplicity_factor": median_multiplicity_factor,
+            },
+        )
         df: pd.DataFrame = pd.read_csv(fp, sep="\t", header=None)
     except pd.errors.EmptyDataError:
+        logger.warning("Mash file empty", extra={"path": str(fp)})
         return pd.DataFrame(
             columns=[
                 "SampleID",
@@ -107,6 +149,7 @@ def parse_mash_winning_sorted_tab(
     df = df[df["hits_per_thousand"].apply(lambda x: int(x.split("/")[0])) >= hits]
 
     if df.empty:
+        logger.debug("No mash hits after filtering", extra={"path": str(fp)})
         return pd.DataFrame(
             columns=[
                 "SampleID",
@@ -129,6 +172,7 @@ def parse_mash_winning_sorted_tab(
 
     # Filter by median multiplicity factor
     if df.empty:
+        logger.debug("No mash hits after species filtering", extra={"path": str(fp)})
         return pd.DataFrame(
             columns=[
                 "SampleID",
@@ -148,6 +192,10 @@ def parse_mash_winning_sorted_tab(
     ]
 
     df.insert(0, "SampleID", _parse_sample_name(fp))
+    logger.debug(
+        "Parsed mash dataframe",
+        extra={"path": str(fp), "dataframe": df.to_dict(orient="list")},
+    )
     return df
 
 
@@ -158,6 +206,7 @@ def _parse_header(h: str) -> dict[str, str]:
 
 
 def parse_fasta(fp: Path) -> pd.DataFrame:
+    logger.debug("Parsing FASTA file", extra={"path": str(fp)})
     headers = []
     with open(fp) as f:
         for l in f:
@@ -165,6 +214,7 @@ def parse_fasta(fp: Path) -> pd.DataFrame:
                 headers.append(l.strip())
 
     if not headers:
+        logger.debug("FASTA has no headers", extra={"path": str(fp)})
         return pd.DataFrame(
             {
                 "SampleID": [_parse_sample_name(fp)],
@@ -184,7 +234,7 @@ def parse_fasta(fp: Path) -> pd.DataFrame:
     avg_cov = sum(int(h["len"]) * float(h["cov"]) for h in hs) / total_length
     rounded_cov = round(avg_cov, 2)
 
-    return pd.DataFrame(
+    df = pd.DataFrame(
         {
             "SampleID": [_parse_sample_name(fp)],
             "Total_contigs": [total_contigs],
@@ -194,6 +244,12 @@ def parse_fasta(fp: Path) -> pd.DataFrame:
             "Average_coverage": [rounded_cov],
         }
     )
+
+    logger.debug(
+        "Parsed FASTA dataframe",
+        extra={"path": str(fp), "dataframe": df.to_dict(orient="list")},
+    )
+    return df
 
 
 def parse_sylph(fp: Path) -> pd.DataFrame:
@@ -207,6 +263,10 @@ def parse_sylph(fp: Path) -> pd.DataFrame:
         return df[["SampleID", "Contig_name", "species"]]
 
     df["species"] = df["Contig_name"].apply(_extract_species_name)
+    logger.debug(
+        "Parsed sylph dataframe",
+        extra={"path": str(fp), "dataframe": df.to_dict(orient="list")},
+    )
     return df
 
 
@@ -217,7 +277,32 @@ def parse_all_outputs(
 ) -> dict[str, pd.DataFrame]:
     parsed_outputs = {}
     for tool, fps in outputs.items():
-        dfs = [parsers[tool](fp, **parser_kwargs.get(tool, {})) for fp in fps]
-        combined_df = pd.concat(dfs, ignore_index=True)
+        logger.debug(
+            "Parsing outputs for tool",
+            extra={"tool": tool, "file_paths": [str(fp) for fp in fps]},
+        )
+        dfs = []
+        for fp in fps:
+            try:
+                dfs.append(parsers[tool](fp, **parser_kwargs.get(tool, {})))
+            except Exception:
+                logger.exception(
+                    "Failed to parse file",
+                    extra={"tool": tool, "path": str(fp)},
+                )
+                continue
+
+        if dfs:
+            combined_df = pd.concat(dfs, ignore_index=True)
+        else:
+            logger.error(
+                "No successful parses for tool",
+                extra={"tool": tool, "file_paths": [str(fp) for fp in fps]},
+            )
+            combined_df = pd.DataFrame()
+        logger.debug(
+            "Combined dataframe for tool",
+            extra={"tool": tool, "dataframe": combined_df.to_dict(orient="list")},
+        )
         parsed_outputs[tool] = combined_df
     return parsed_outputs
