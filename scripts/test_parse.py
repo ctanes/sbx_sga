@@ -8,6 +8,7 @@ from .parse import (
     parse_fasta,
     parse_mlst,
     parse_sylph,
+    _extract_species_name,
 )
 
 
@@ -255,3 +256,31 @@ def test_parse_sylph_empty(tmp_path):
 
     assert df.empty
     assert list(df.columns) == ["SampleID", "Contig_name", "species"]
+
+
+def test_extract_species_name_variations():
+    cases = [
+        (
+            "BMZV01000001.1 Kocuria marina KCTC 9943 DNA, sequence01, whole genome shotgun sequence",
+            "Kocuria marina",
+        ),
+        (
+            "CP007494.1 Bordetella holmesii ATCC 51541, complete genome",
+            "Bordetella holmesii",
+        ),
+        (
+            "NZ_SCMK01000010.1 Sphingomonas sp. 1F27F7B NODE_10_length_165275_cov_23.714959, whole genome shotgun sequence",
+            "Sphingomonas sp.",
+        ),
+        (
+            "[4 seqs] NC_013922.1 Natrialba magadii ATCC 43099, complete genome [...]",
+            "Natrialba magadii",
+        ),
+        (
+            "NC_013947.1 Stackebrandtia nassauensis DSM 44728, complete genome",
+            "Stackebrandtia nassauensis",
+        ),
+    ]
+
+    for classification, expected in cases:
+        assert _extract_species_name(classification) == expected
