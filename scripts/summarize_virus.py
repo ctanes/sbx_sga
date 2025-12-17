@@ -47,7 +47,7 @@ if "snakemake" in globals():
             df.to_csv(tool_reports[tool], sep="\t", index=False)
             logger.debug(
                 "Wrote virus tool report",
-                extra={"tool": tool, "dataframe": df.to_dict(orient="list")},
+                extra={"tool": tool},
             )
 
         logger.debug(

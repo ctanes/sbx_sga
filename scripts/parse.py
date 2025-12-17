@@ -21,10 +21,7 @@ def parse_tsv(fp: Path) -> pd.DataFrame:
         return pd.DataFrame(columns=["SampleID"])
 
     df.insert(0, "SampleID", _parse_sample_name(fp))
-    logger.debug(
-        "Parsed TSV dataframe",
-        extra={"path": str(fp), "dataframe": df.to_dict(orient="list")},
-    )
+    logger.debug("Parsed TSV dataframe", extra={"path": str(fp)})
     return df
 
 
@@ -49,10 +46,7 @@ def parse_mlst(fp: Path) -> pd.DataFrame:
     # Drop unused columns, everything but SampleID, classification, allele_assignment
     df = df[["SampleID", "classification", "allele_assignment"]]
 
-    logger.debug(
-        "Parsed MLST dataframe",
-        extra={"path": str(fp), "dataframe": df.to_dict(orient="list")},
-    )
+    logger.debug("Parsed MLST dataframe", extra={"path": str(fp)})
     return df
 
 
@@ -67,10 +61,7 @@ def parse_bakta_txt(fp: Path) -> pd.DataFrame:
             df[key.strip()] = [value.strip()]
 
     df.insert(0, "SampleID", _parse_sample_name(fp))
-    logger.debug(
-        "Parsed Bakta dataframe",
-        extra={"path": str(fp), "dataframe": df.to_dict(orient="list")},
-    )
+    logger.debug("Parsed Bakta dataframe", extra={"path": str(fp)})
     return df
 
 
@@ -192,10 +183,7 @@ def parse_mash_winning_sorted_tab(
     ]
 
     df.insert(0, "SampleID", _parse_sample_name(fp))
-    logger.debug(
-        "Parsed mash dataframe",
-        extra={"path": str(fp), "dataframe": df.to_dict(orient="list")},
-    )
+    logger.debug("Parsed mash dataframe", extra={"path": str(fp)})
     return df
 
 
@@ -245,10 +233,7 @@ def parse_fasta(fp: Path) -> pd.DataFrame:
         }
     )
 
-    logger.debug(
-        "Parsed FASTA dataframe",
-        extra={"path": str(fp), "dataframe": df.to_dict(orient="list")},
-    )
+    logger.debug("Parsed FASTA dataframe", extra={"path": str(fp)})
     return df
 
 
@@ -263,10 +248,7 @@ def parse_sylph(fp: Path) -> pd.DataFrame:
         return df[["SampleID", "Contig_name", "species"]]
 
     df["species"] = df["Contig_name"].apply(_extract_species_name)
-    logger.debug(
-        "Parsed sylph dataframe",
-        extra={"path": str(fp), "dataframe": df.to_dict(orient="list")},
-    )
+    logger.debug("Parsed sylph dataframe", extra={"path": str(fp)})
     return df
 
 
@@ -300,9 +282,7 @@ def parse_all_outputs(
                 extra={"tool": tool, "file_paths": [str(fp) for fp in fps]},
             )
             combined_df = pd.DataFrame()
-        logger.debug(
-            "Combined dataframe for tool",
-            extra={"tool": tool, "dataframe": combined_df.to_dict(orient="list")},
-        )
+
+        logger.debug("Combined dataframe for tool", extra={"tool": tool})
         parsed_outputs[tool] = combined_df
     return parsed_outputs
