@@ -79,13 +79,16 @@ if "snakemake" in globals():
         )
         write_tool_reports(parsed_outputs, tool_reports)
 
-        logger.debug("Producing final summaries")
+        logger.debug("Producing assembly QC summary")
         write_final_summary(assembly_qcs, tools_to_model(parsed_outputs, "assembly_qc"))
+        logger.debug("Producing taxonomic assignment summary")
         write_final_summary(
             taxonomic_assignments,
             tools_to_model(parsed_outputs, "taxonomic_assignment"),
         )
+        logger.debug("Producing contaminant summary")
         write_final_summary(contaminants, tools_to_model(parsed_outputs, "contaminant"))
+        logger.debug("Producing antimicrobial summary")
         write_final_summary(
             antimicrobials, tools_to_model(parsed_outputs, "antimicrobial")
         )

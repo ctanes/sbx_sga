@@ -121,7 +121,7 @@ def parse_mash_winning_sorted_tab(
                 "median_multiplicity",
                 "val",
                 "reference",
-                "classification",
+                "full_classification",
                 "species",
             ]
         )
@@ -132,7 +132,7 @@ def parse_mash_winning_sorted_tab(
         "median_multiplicity",
         "val",
         "reference",
-        "classification",
+        "full_classification",
     ]
 
     # Filter by identity threshold
@@ -151,13 +151,13 @@ def parse_mash_winning_sorted_tab(
                 "median_multiplicity",
                 "val",
                 "reference",
-                "classification",
+                "full_classification",
                 "species",
             ]
         )
 
     # Extract species names
-    df["species"] = df["classification"].apply(_extract_species_name)
+    df["species"] = df["full_classification"].apply(_extract_species_name)
 
     # Filter out species names that include "phage"
     df = df[~df["species"].str.contains("phage", case=False, na=False)]
@@ -174,7 +174,7 @@ def parse_mash_winning_sorted_tab(
                 "median_multiplicity",
                 "val",
                 "reference",
-                "classification",
+                "full_classification",
                 "species",
             ]
         )

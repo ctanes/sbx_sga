@@ -76,7 +76,7 @@ def tools_to_assembly_qc(parsed_outputs: dict[str, pd.DataFrame]) -> pd.DataFram
 
 
 def tools_to_taxonomic_assignment(
-    parsed_outputs: dict[str, pd.DataFrame]
+    parsed_outputs: dict[str, pd.DataFrame],
 ) -> pd.DataFrame:
     mlst_df = parsed_outputs.get("mlst", pd.DataFrame())
     mlst_df = mlst_df.rename(
