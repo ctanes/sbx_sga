@@ -55,7 +55,7 @@ if "snakemake" in globals():
 
         tool_reports = {Path(fp).stem: Path(fp) for fp in snakemake.output.tool_reports}  # type: ignore
 
-        assemblies = snakemake.input.assemblies  # type: ignore
+        assemblies = snakemake.output.assemblies  # type: ignore
         assembly_qcs = snakemake.output.assembly_qcs  # type: ignore
         taxonomic_assignments = snakemake.output.taxonomic_assignments  # type: ignore
         contaminants = snakemake.output.contaminants  # type: ignore
@@ -83,7 +83,9 @@ if "snakemake" in globals():
         write_tool_reports(parsed_outputs, tool_reports)
 
         logger.debug("Producing assembly summary")
-        write_assembly_summary(assemblies, parsed_outputs["assembly_qc"], sga_version)
+        write_assembly_summary(
+            assemblies, set(parsed_outputs["shovill"]["SampleID"]), sga_version
+        )
         logger.debug("Producing assembly QC summary")
         write_final_summary(assembly_qcs, tools_to_model(parsed_outputs, "assembly_qc"))
         logger.debug("Producing taxonomic assignment summary")
