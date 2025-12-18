@@ -184,6 +184,15 @@ def parse_mash_winning_sorted_tab(
         >= top_median_multiplicity * median_multiplicity_factor
     ]
 
+    # Sort by hits with the largest at the top
+    df = df.sort_values(
+        by="hits_per_thousand",
+        key=lambda col: col.apply(lambda x: int(x.split("/")[0])),
+        ascending=False,
+    )
+    # Remove duplicate species assignments, keeping the top hit
+    df = df.drop_duplicates(subset=["species"], keep="first")
+
     df.insert(0, "SampleID", _parse_sample_name(fp))
     logger.debug("Parsed mash dataframe", extra={"path": str(fp)})
     return df
