@@ -30,6 +30,7 @@ if "snakemake" in globals():
         from scripts.write import (
             write_tool_reports,
             write_final_summary,
+            write_assembly_summary,
         )
 
         parsers = {
@@ -54,6 +55,7 @@ if "snakemake" in globals():
 
         tool_reports = {Path(fp).stem: Path(fp) for fp in snakemake.output.tool_reports}  # type: ignore
 
+        assemblies = snakemake.input.assemblies  # type: ignore
         assembly_qcs = snakemake.output.assembly_qcs  # type: ignore
         taxonomic_assignments = snakemake.output.taxonomic_assignments  # type: ignore
         contaminants = snakemake.output.contaminants  # type: ignore
@@ -62,6 +64,7 @@ if "snakemake" in globals():
         mash_identity = snakemake.params.mash_identity  # type: ignore
         mash_hits = snakemake.params.mash_hits  # type: ignore
         mash_median_multiplicity_factor = snakemake.params.mash_median_multiplicity_factor  # type: ignore
+        sga_version = snakemake.params.sga_version  # type: ignore
 
         parser_kwargs = {
             "mash": {
@@ -79,6 +82,8 @@ if "snakemake" in globals():
         )
         write_tool_reports(parsed_outputs, tool_reports)
 
+        logger.debug("Producing assembly summary")
+        write_assembly_summary(assemblies, parsed_outputs["assembly_qc"], sga_version)
         logger.debug("Producing assembly QC summary")
         write_final_summary(assembly_qcs, tools_to_model(parsed_outputs, "assembly_qc"))
         logger.debug("Producing taxonomic assignment summary")

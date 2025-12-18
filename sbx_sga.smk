@@ -296,6 +296,7 @@ rule sga_report:
                 "abritamr",
             ],
         ),
+        assemblies=ISOLATE_FP / "assemblies.tsv",
         assembly_qcs=ISOLATE_FP / "assembly_qcs.tsv",
         taxonomic_assignments=ISOLATE_FP / "taxonomic_assignments.tsv",
         contaminants=ISOLATE_FP / "contaminants.tsv",
@@ -306,6 +307,7 @@ rule sga_report:
         mash_median_multiplicity_factor=Cfg["sbx_sga"][
             "mash_median_multiplicity_factor"
         ],
+        sga_version=SBX_SGA_VERSION,
     log:
         LOG_FP / "sga_report.log",
     benchmark:
